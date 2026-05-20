@@ -1,0 +1,216 @@
+@model Batarilan_Exercise1.Models.UserDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    // ── All computed variables at the top — NEVER inside else{} blocks ──
+    var user = Model?.User;
+
+    string initials   = "";
+    string fullName   = "";
+    string userEmail  = "";
+    string userRole   = "";
+    string userId_str = "0";
+    string userIdNum  = "";
+    string userCourse = "";
+    string userYear   = "";
+    string userAddr   = "";
+
+    int currentPoints = 0;
+    int remaining     = 0;
+    int pointsNeeded  = 3;
+    string bonusMsg   = "";
+    string bonusColor = "#3a4a7a";
+
+    if (user != null)
+    {
+        if (!string.IsNullOrEmpty(user.FirstName)) initials += user.FirstName[0];
+        if (!string.IsNullOrEmpty(user.LastName))  initials += user.LastName[0];
+
+        fullName   = (user.FirstName + " " + user.MiddleName + " " + user.LastName).Replace("  ", " ").Trim();
+        userEmail  = user.Email      ?? "";
+        userRole   = user.Role       ?? "";
+        userId_str = user.Id.ToString();
+        userIdNum  = user.IdNumber   ?? "";
+        userCourse = user.Course     ?? "";
+        userYear   = user.CourseLevel ?? "";
+        userAddr   = user.Address    ?? "";
+
+        currentPoints = user.Points;
+        remaining     = ViewBag.RemainingSessions is int r ? r : 0;
+        pointsNeeded  = (currentPoints % 3 == 0 && currentPoints > 0) ? 0 : 3 - (currentPoints % 3);
+        bonusColor    = currentPoints >= 3 ? "#1e8a5e" : "#3a4a7a";
+        bonusMsg      = currentPoints >= 3
+            ? "✅ You have enough points to earn a bonus session!"
+            : (pointsNeeded > 0 ? $"Need {pointsNeeded} more point(s) to earn a bonus session." : "");
+    }
+
+    var announcements = ViewBag.Announcements as List<Batarilan_Exercise1.Models.Announcement>
+                        ?? new List<Batarilan_Exercise1.Models.Announcement>();
+}
+
+<div class="page-header">
+    <div>
+        <h3>Student Dashboard</h3>
+        <p class="page-subtitle">Welcome back, @user?.FirstName</p>
+    </div>
+    <a asp-controller="User" asp-action="Profile" class="btn btn-outline-secondary btn-sm">👤 My Profile</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<!-- ── Row 1: Student Profile + Rules & Regulations ── -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+
+    <!-- Student Profile -->
+    <div class="card">
+        <div class="card-header"><span>👤</span> Student Profile</div>
+        <div class="card-body">
+            @if (user == null)
+            {
+                <p class="text-muted">No student information available.</p>
+            }
+            else
+            {
+                <!-- Avatar + Name -->
+                <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.1rem; padding-bottom:1rem; border-bottom:2px solid var(--border);">
+                    <div class="profile-avatar" style="width:52px; height:52px; border-radius:50%; background:var(--navy,#0d2b55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; flex-shrink:0;">
+                        @initials
+                    </div>
+                    <div>
+                        <div style="font-size:1.05rem; font-weight:600; color:var(--text);">@fullName</div>
+                        <div style="font-size:0.825rem; color:var(--text-muted); margin-top:0.1rem;">@userEmail</div>
+                        <span style="background:var(--accent-lt,#fff8e7); color:#b57f18; padding:0.15rem 0.55rem; border-radius:20px; font-size:0.72rem; font-weight:600; margin-top:0.35rem; display:inline-block;">
+                            @userRole
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Info rows -->
+                <div class="info-row"><span class="info-key">ID Number</span>  <span class="info-val">@userIdNum</span></div>
+                <div class="info-row"><span class="info-key">Course</span>     <span class="info-val">@userCourse</span></div>
+                <div class="info-row"><span class="info-key">Year Level</span> <span class="info-val">@userYear</span></div>
+                <div class="info-row"><span class="info-key">Address</span>    <span class="info-val">@userAddr</span></div>
+
+                <!-- Points & Sessions -->
+                <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+                    <div style="flex:1; text-align:center; background:var(--accent-lt,#fff8e7); border-radius:8px; padding:0.6rem 0.5rem;">
+                        <div style="font-size:1.35rem; font-weight:700; color:#b57f18;">@currentPoints</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">Points</div>
+                    </div>
+                    <div style="flex:1; text-align:center; background:#e8f5ee; border-radius:8px; padding:0.6rem 0.5rem;">
+                        <div style="font-size:1.35rem; font-weight:700; color:#1e8a5e;">@remaining</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">Sessions Left</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:0.65rem; background:#f0f4ff; border-radius:6px; padding:0.55rem 0.75rem; font-size:0.78rem; color:@bonusColor; line-height:1.5;">
+                    💡 Every <strong>3 points</strong> = <strong>+1 extra session</strong>.
+                    <span style="color:@bonusColor; font-weight:600;"> @bonusMsg</span>
+                </div>
+            }
+        </div>
+        @if (user != null)
+        {
+            <div class="card-footer" style="text-align:right;">
+                <a asp-controller="User" asp-action="Edit" asp-route-id="@user.Id" class="btn btn-primary btn-sm">✏️ Edit Profile</a>
+            </div>
+        }
+    </div>
+
+    <!-- Rules & Regulations -->
+    <div class="card">
+        <div class="card-header"><span>📋</span> Laboratory Rules and Regulations</div>
+        <div class="card-body" style="max-height:420px; overflow-y:auto; padding-right:0.5rem;">
+            <p style="font-size:0.82rem; color:var(--text-muted); font-style:italic; margin-bottom:0.75rem;">
+                To avoid embarrassment and maintain camaraderie with your friends and superiors at our laboratories, please observe the following:
+            </p>
+            <ol style="margin:0; padding-left:1.25rem; font-size:0.84rem; line-height:1.9; color:var(--text);">
+                <li>Maintain silence, proper decorum, and discipline inside the laboratory. Mobile phones, walkmans and other personal pieces of equipment must be switched off.</li>
+                <li>Games are not allowed inside the lab. This includes computer-related games, card games and other games that may disturb the operation of the lab.</li>
+                <li>Surfing the Internet is allowed only with the permission of the instructor. Downloading and installing of software are strictly prohibited.</li>
+                <li>Getting access to other websites not related to the course (especially pornographic and illicit sites) is strictly prohibited.</li>
+                <li>Deleting computer files and changing the set-up of the computer is a major offense.</li>
+                <li>Observe computer time usage carefully. A fifteen-minute allowance is given for each use. Otherwise, the unit will be given to those who wish to "sit-in".</li>
+                <li>Observe proper decorum while inside the laboratory:
+                    <ol type="a" style="margin-top:0.25rem; line-height:1.8;">
+                        <li>Do not get inside the lab unless the instructor is present.</li>
+                        <li>All bags, knapsacks, and the likes must be deposited at the counter.</li>
+                        <li>Follow the seating arrangement of your instructor.</li>
+                        <li>At the end of class, all software programs must be closed.</li>
+                        <li>Return all chairs to their proper places after using.</li>
+                    </ol>
+                </li>
+                <li>Chewing gum, eating, drinking, smoking, and other forms of vandalism are prohibited inside the lab.</li>
+                <li>Anyone causing a continual disturbance will be asked to leave the lab. Acts or gestures offensive to the members of the community, including public display of physical intimacy, are not tolerated.</li>
+                <li>Persons exhibiting hostile or threatening behavior such as yelling, swearing, or disregarding requests made by lab personnel will be asked to leave the lab.</li>
+                <li>For serious offense, the lab personnel may call the Civil Security Office (CSU) for assistance.</li>
+                <li>Any technical problem or difficulty must be addressed to the laboratory supervisor, student assistant or instructor immediately.</li>
+            </ol>
+            <div style="margin-top:0.85rem; padding:0.6rem 0.85rem; background:#fff5f5; border-left:3px solid #e05c5c; border-radius:0 6px 6px 0;">
+                <div style="font-size:0.8rem; font-weight:700; color:#c0392b; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Disciplinary Action</div>
+                <ul style="margin:0; padding-left:1.1rem; font-size:0.8rem; color:var(--text); line-height:1.8;">
+                    <li><strong>First Offense</strong> — The Head, Dean, or OIC recommends to the Guidance Center a suspension from classes for each offender.</li>
+                    <li><strong>Second and Subsequent Offenses</strong> — A recommendation for a heavier sanction will be endorsed to the Guidance Center.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Quick Actions ── 
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.85rem; margin-bottom:1rem;">
+    <a asp-controller="User" asp-action="SitInHistory" style="text-decoration:none;">
+        <div class="stat-card" style="text-align:center; cursor:pointer; border-bottom:3px solid var(--navy-light);">
+            <div style="font-size:1.6rem; margin-bottom:0.3rem;">🖥</div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text);">Sit-In History</div>
+        </div>
+    </a>
+    <a asp-controller="User" asp-action="MyReservations" style="text-decoration:none;">
+        <div class="stat-card" style="text-align:center; cursor:pointer; border-bottom:3px solid var(--accent);">
+            <div style="font-size:1.6rem; margin-bottom:0.3rem;">📅</div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text);">My Reservations</div>
+        </div>
+    </a>
+    <a asp-controller="User" asp-action="MyRewards" style="text-decoration:none;">
+        <div class="stat-card" style="text-align:center; cursor:pointer; border-bottom:3px solid var(--success);">
+            <div style="font-size:1.6rem; margin-bottom:0.3rem;">⭐</div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text);">My Rewards</div>
+        </div>
+    </a>
+    <a asp-controller="User" asp-action="MyFeedback" style="text-decoration:none;">
+        <div class="stat-card" style="text-align:center; cursor:pointer; border-bottom:3px solid var(--info);">
+            <div style="font-size:1.6rem; margin-bottom:0.3rem;">💬</div>
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text);">My Feedback</div>
+        </div>
+    </a>
+</div>-->
+
+<!-- ── Announcements ── -->
+<div class="card">
+    <div class="card-header bg-primary">📢 Announcements</div>
+    <div class="card-body" style="padding:0;">
+        @if (!announcements.Any())
+        {
+            <p class="text-muted" style="margin:1.25rem; font-size:0.875rem;">No announcements at this time.</p>
+        }
+        else
+        {
+            foreach (var a in announcements)
+            {
+                <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border);">
+                    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:0.3rem;">
+                        <strong style="font-size:0.9rem; color:var(--text);">@a.Title</strong>
+                        <small class="text-muted" style="white-space:nowrap; font-size:0.78rem;">
+                            @a.DatePosted.ToString("MMM dd, yyyy")
+                        </small>
+                    </div>
+                    <p style="margin:0; font-size:0.875rem; color:var(--text-muted); line-height:1.6;">@a.Message</p>
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,74 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — CCS Sit-in System</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+</head>
+<body style="margin:0;">
+<div class="auth-layout">
+
+    <!-- Left Panel -->
+    <div class="auth-panel-left">
+        <img src="~/images/ccs-logo.png" style="width:260px; max-width:100%; opacity:0.95; position:relative; z-index:1;" />
+        <div style="margin-top:2rem; text-align:center; position:relative; z-index:1;">
+            <p style="color:rgba(255,255,255,0.6); font-size:0.85rem; max-width:260px; line-height:1.6; margin:0 auto;">
+                College of Computer Studies<br/>Sit-In Monitoring System
+            </p>
+        </div>
+        <div style="position:absolute; bottom:2rem; left:0; right:0; text-align:center; color:rgba(255,255,255,0.3); font-size:0.75rem;">
+            © 2024 CCS
+        </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="auth-panel-right">
+        <div class="auth-card">
+            <h2>Welcome back</h2>
+            <p class="auth-sub">Sign in to your CCS account</p>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
+            <form asp-action="Login" method="post">
+                <div class="mb-3">
+                    <label class="form-label">ID Number</label>
+                    <input name="idNumber" type="text" class="form-control" placeholder="e.g. 2024-00001" autocomplete="username" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input name="password" type="password" class="form-control" placeholder="Enter your password" autocomplete="current-password" />
+                </div>
+                <div style="text-align:center; margin-top:0.5rem;">
+                    <button type="submit" class="btn btn-primary w-100" style="padding:0.65rem; display:block;">Sign In</button>
+                </div>
+            </form>
+
+            <p style="text-align:center; margin-top:1.5rem; font-size:0.875rem; color:var(--text-muted);">
+                Don't have an account? <a href="/Account/Register" style="color:var(--navy-light); font-weight:600;">Register here</a>
+            </p>
+
+            <div style="text-align:center; margin-top:0.75rem;">
+                <a href="/" style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.85rem; color:var(--text-muted); text-decoration:none; padding:0.45rem 1rem; border:1.5px solid var(--border); border-radius:8px; transition:all 0.15s;"
+                   onmouseover="this.style.borderColor='var(--navy-light)';this.style.color='var(--navy)'"
+                   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

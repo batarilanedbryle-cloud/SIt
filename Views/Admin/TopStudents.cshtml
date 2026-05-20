@@ -1,0 +1,18 @@
+﻿@model List<Batarilan_Exercise1.Models.UserAccount>
+
+<h3>Top Students (Rewards)</h3>
+
+<table class="table table-striped">
+    <tr>
+        <th>Name</th>
+        <th>Points</th>
+    </tr>
+
+    @foreach (var u in Model)
+    {
+        <tr>
+            <td>@u.FirstName @u.LastName</td>
+            <td>@u.Points</td>
+        </tr>
+    }
+</table>

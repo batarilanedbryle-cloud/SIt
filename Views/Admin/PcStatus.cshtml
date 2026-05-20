@@ -1,0 +1,120 @@
+@using Batarilan_Exercise1.Models
+@model List<PcUnit>
+@{
+    ViewData["Title"] = "PC Status";
+    var labs         = ViewBag.Labs         as string[] ?? Array.Empty<string>();
+    var selectedRoom = ViewBag.SelectedRoom as string  ?? "";
+    int available    = Model.Count(p => p.Status == "Available");
+    int unavailable  = Model.Count(p => p.Status == "Unavailable");
+}
+
+<div class="page-header">
+    <div>
+        <h3>🖥 PC Availability</h3>
+        <p class="page-subtitle">Monitor and manage PC status per lab room</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+
+<!-- Lab room tabs -->
+<div style="display:flex; gap:0.4rem; margin-bottom:1.5rem; flex-wrap:wrap; border-bottom:2px solid var(--border); padding-bottom:0.5rem;">
+    @foreach (var lab in labs)
+    {
+        bool active = lab == selectedRoom;
+        <a asp-action="PcStatus" asp-route-room="@lab"
+           style="padding:0.45rem 1.1rem; border-radius:8px 8px 0 0; font-size:0.83rem; font-weight:600;
+                  border:1.5px solid var(--border); border-bottom:none; margin-bottom:-2px; text-decoration:none;
+                  @(active ? "background:var(--navy); color:white; border-color:var(--navy);" : "background:var(--white); color:var(--text-muted);")">
+            @lab
+        </a>
+    }
+</div>
+
+<!-- Stats row -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.85rem; margin-bottom:1.5rem;">
+    <div class="stat-card" style="text-align:center;">
+        <div class="stat-label">Total PCs</div>
+        <div class="stat-value">@Model.Count</div>
+        <div class="stat-sub">@selectedRoom</div>
+    </div>
+    <div class="stat-card" style="text-align:center; border-bottom:3px solid var(--success);">
+        <div class="stat-label">Available</div>
+        <div class="stat-value" style="color:var(--success);">@available</div>
+        <div class="stat-sub" style="color:var(--success);">Free to use</div>
+    </div>
+    <div class="stat-card" style="text-align:center; border-bottom:3px solid var(--danger);">
+        <div class="stat-label">Unavailable</div>
+        <div class="stat-value" style="color:var(--danger);">@unavailable</div>
+        <div class="stat-sub" style="color:var(--danger);">Reserved / In use</div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; align-items:center;">
+    <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Quick Actions:</span>
+    <a href="/Admin/Reservations" class="btn btn-outline-secondary btn-sm" style="font-size:0.78rem;">📅 View Reservations</a>
+    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.5rem;">
+        💡 PC status auto-updates when you Approve or Deny a reservation.
+    </span>
+</div>
+
+<!-- Legend -->
+<div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem; font-size:0.82rem; color:var(--text-muted);">
+    <span>Legend:</span>
+    <span style="display:flex; align-items:center; gap:0.35rem;">
+        <span style="width:16px; height:16px; border-radius:4px; background:#e6f7f0; border:1.5px solid var(--success); display:inline-block;"></span> Available
+    </span>
+    <span style="display:flex; align-items:center; gap:0.35rem;">
+        <span style="width:16px; height:16px; border-radius:4px; background:#fdeaea; border:1.5px solid var(--danger); display:inline-block;"></span> Unavailable
+    </span>
+    <span style="margin-left:auto; font-size:0.78rem;">Click any PC to toggle its status</span>
+</div>
+
+<!-- PC Grid -->
+<div class="card">
+    <div class="card-header" style="background:var(--navy); color:white; display:flex; align-items:center; justify-content:space-between;">
+        <span>🖥 @selectedRoom — PC Map (1–50)</span>
+        <small style="opacity:0.75; font-size:0.75rem;">Click any PC to toggle Available ↔ Unavailable</small>
+    </div>
+    <div class="card-body">
+        <div style="display:grid; grid-template-columns:repeat(10,1fr); gap:0.6rem;">
+            @foreach (var pc in Model)
+            {
+                bool isAvailable = pc.Status == "Available";
+                string bg      = isAvailable ? "#e6f7f0" : "#fdeaea";
+                string border  = isAvailable ? "var(--success)" : "var(--danger)";
+                string clr     = isAvailable ? "var(--success)" : "var(--danger)";
+                string icon    = isAvailable ? "✅" : "🔴";
+                string action  = isAvailable ? "Mark Unavailable" : "Mark Available";
+
+                <form asp-action="TogglePcStatus" method="post" style="margin:0;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="pcId"      value="@pc.Id"           />
+                    <input type="hidden" name="returnRoom" value="@selectedRoom"    />
+                    <button type="submit"
+                            title="@action"
+                            onclick="return confirm('@(isAvailable ? "Mark PC " + pc.PcNumber + " as Unavailable?" : "Mark PC " + pc.PcNumber + " as Available?")')"
+                            style="width:100%; aspect-ratio:1; border-radius:8px; border:2px solid @border;
+                                   background:@bg; cursor:pointer; display:flex; flex-direction:column;
+                                   align-items:center; justify-content:center; gap:2px;
+                                   transition:transform 0.1s ease, box-shadow 0.1s ease; padding:4px;"
+                            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'"
+                            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                        <span style="font-size:0.75rem;">@icon</span>
+                        <span style="font-size:0.72rem; font-weight:700; color:@clr;">PC @pc.PcNumber</span>
+                        @if (pc.ReservationId.HasValue)
+                        {
+                            <span style="font-size:0.55rem; color:#e05c5c; font-weight:600;">RSVD</span>
+                        }
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:1rem; padding:0.9rem 1.1rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); font-size:0.82rem; color:var(--text-muted);">
+    💡 <strong>Tip:</strong> PC status is automatically updated when you <strong>Approve</strong> or <strong>Deny</strong> a reservation. You can also toggle status manually here.
+</div>

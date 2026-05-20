@@ -1,0 +1,89 @@
+@model List<Batarilan_Exercise1.Models.Announcement>
+@{
+    ViewData["Title"] = "Manage Announcements";
+    int count = Model?.Count ?? 0;
+}
+
+<div class="page-header">
+    <div>
+        <h3>📢 Manage Announcements</h3>
+        <p class="page-subtitle">Post, edit and delete announcements for students</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+@if (TempData["Error"]   != null) { <div class="alert alert-danger">@TempData["Error"]</div>   }
+
+<div style="display:grid; grid-template-columns:380px 1fr; gap:1.25rem; align-items:start;">
+
+    <!-- Post New -->
+    <div style="position:sticky; top:1.5rem;">
+        <div class="card">
+            <div class="card-header" style="background:var(--navy); color:white;">📝 Post New Announcement</div>
+            <div class="card-body">
+                <form asp-controller="Admin" asp-action="CreateAnnouncement" method="post">
+                    @Html.AntiForgeryToken()
+                    <div style="margin-bottom:0.85rem;">
+                        <label class="form-label">Title</label>
+                        <input type="text" name="Title" class="form-control" placeholder="Announcement title" required maxlength="150" />
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label class="form-label">Message</label>
+                        <textarea name="Message" class="form-control" rows="4"
+                                  placeholder="Write your announcement here…" required style="resize:vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success" style="width:100%; justify-content:center;">📢 Post Announcement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- List -->
+    <div>
+        @if (Model == null || !Model.Any())
+        {
+            <div class="card">
+                <div class="card-body" style="text-align:center; padding:3rem 2rem;">
+                    <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">📢</div>
+                    <p style="color:var(--text-muted); margin:0;">No announcements yet. Post one using the form.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                @foreach (var a in Model)
+                {
+                    <div class="card">
+                        <div style="padding:1rem 1.25rem; display:flex; align-items:flex-start; gap:1rem;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                                    <span style="font-weight:700; font-size:0.95rem; color:var(--navy);">@a.Title</span>
+                                    <span style="background:#e5f0fb; color:#2270b8; font-size:0.7rem; font-weight:600; padding:0.15rem 0.55rem; border-radius:20px; white-space:nowrap;">
+                                        @a.DatePosted.ToString("MMM dd, yyyy · h:mm tt")
+                                    </span>
+                                </div>
+                                <p style="margin:0; font-size:0.875rem; color:var(--text-muted); line-height:1.6;">@a.Message</p>
+                            </div>
+                            <div style="display:flex; gap:0.4rem; flex-shrink:0;">
+                                <a asp-controller="Admin" asp-action="EditAnnouncement" asp-route-id="@a.Id"
+                                   class="btn btn-warning btn-sm">✏️ Edit</a>
+                                <form asp-controller="Admin" asp-action="DeleteAnnouncement" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Delete this announcement? Students will no longer see it.');">🗑 Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-muted); text-align:right;">
+                @count announcement@(count != 1 ? "s" : "") total
+            </div>
+        }
+    </div>
+
+</div>

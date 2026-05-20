@@ -1,0 +1,82 @@
+@using Azure.Core
+@model IEnumerable<Batarilan_Exercise1.Models.UserAccount>
+@{
+    ViewData["Title"] = "Search Students";
+    var keyword = Context.Request.Query["keyword"].ToString();
+    var error = TempData["Error"] as string;
+    var success = TempData["Success"] as string;
+}
+
+<div class="page-header">
+    <div>
+        <h3>Search Students</h3>
+        <p class="page-subtitle">Find and manage student accounts</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-primary btn-sm">← Back to Admin</a>
+</div>
+
+@if (!string.IsNullOrEmpty(error))   { <div class="alert alert-danger">@error</div> }
+@if (!string.IsNullOrEmpty(success)) { <div class="alert alert-success">@success</div> }
+
+<div class="card" style="margin-bottom:1rem;">
+    <div class="card-body" style="padding:1rem;">
+        <form method="get" style="display:flex; gap:0.75rem; align-items:center;">
+            <input name="keyword" value="@keyword" class="form-control" placeholder="Search by name, ID number, email, course…" style="flex:1;" />
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a asp-action="Search" class="btn btn-outline-secondary">Clear</a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Number</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                    <th>Level</th>
+                    <th>Role</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No results found</td></tr>
+                }
+                else
+                {
+                    foreach (var u in Model)
+                    {
+                        <tr>
+                            <td style="font-weight:500;">@u.IdNumber</td>
+                            <td>@(u.FirstName) @(u.MiddleName) @(u.LastName)</td>
+                            <td style="color:var(--text-muted);">@u.Email</td>
+                            <td>@u.Course</td>
+                            <td>@u.CourseLevel</td>
+                            <td><span style="background:var(--accent-lt);color:#b57f18;padding:0.15rem 0.55rem;border-radius:20px;font-size:0.72rem;font-weight:600;">@u.Role</span></td>
+                            <td style="text-align:right;">
+                                <a asp-controller="Admin" asp-action="SitIn" asp-route-id="@u.Id" class="btn btn-success btn-sm">Sit-in</a>
+                                <form asp-controller="Admin" asp-action="Delete" method="post" class="d-inline" style="margin-left:0.3rem;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    @if (string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <button type="button" class="btn btn-danger btn-sm" disabled>Delete</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this student?');">Delete</button>
+                                    }
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

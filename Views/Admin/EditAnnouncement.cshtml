@@ -1,0 +1,153 @@
+@model Batarilan_Exercise1.Models.Announcement
+@{
+    ViewData["Title"] = "Edit Announcement";
+}
+
+@if (TempData["Error"] != null)   { <div class="alert alert-danger">@TempData["Error"]</div> }
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+
+<div class="page-header">
+    <div>
+        <h3>✏️ Edit Announcement</h3>
+        <p class="page-subtitle">Update the announcement — changes are saved immediately.</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Dashboard</a>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:start;">
+
+    <!-- Edit Form -->
+    <div class="card">
+        <div class="card-header bg-primary" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>📢 Edit Announcement</span>
+            <small style="font-size:0.72rem; opacity:0.75;">ID #@Model.Id · Posted @Model.DatePosted.ToString("MMM dd, yyyy")</small>
+        </div>
+        <div class="card-body">
+            <form asp-controller="Admin" asp-action="EditAnnouncement" method="post" id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="font-weight:600;">Title <span style="color:#c0392b;">*</span></label>
+                    <input type="text"
+                           name="Title"
+                           id="titleInput"
+                           value="@Model.Title"
+                           class="form-control"
+                           required
+                           maxlength="120"
+                           placeholder="Announcement title"
+                           oninput="updatePreview(); markDirty();" />
+                    <div style="display:flex; justify-content:space-between; margin-top:0.3rem;">
+                        <small class="text-muted">Keep it short and clear.</small>
+                        <small id="titleCount" style="color:var(--text-muted); font-size:0.72rem;">@Model.Title.Length / 120</small>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1.25rem;">
+                    <label class="form-label" style="font-weight:600;">Message <span style="color:#c0392b;">*</span></label>
+                    <textarea name="Message"
+                              id="messageInput"
+                              class="form-control"
+                              rows="6"
+                              required
+                              maxlength="1000"
+                              placeholder="Write your announcement here..."
+                              style="resize:vertical;"
+                              oninput="updatePreview(); markDirty();">@Model.Message</textarea>
+                    <div style="display:flex; justify-content:space-between; margin-top:0.3rem;">
+                        <small class="text-muted">Maximum 1000 characters.</small>
+                        <small id="msgCount" style="color:var(--text-muted); font-size:0.72rem;">@Model.Message.Length / 1000</small>
+                    </div>
+                </div>
+
+                <div id="dirtyBanner" style="display:none; background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:0.5rem 0.75rem; margin-bottom:0.75rem; font-size:0.82rem; color:#856404;">
+                    You have unsaved changes.
+                </div>
+
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-success btn-sm">💾 Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetForm()">↩ Reset</button>
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-danger btn-sm">✕ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right column: Preview + Delete -->
+    <div>
+        <div class="card">
+            <div class="card-header" style="background:var(--navy,#0d2b55); color:#fff; font-size:0.85rem;">
+                👁 Live Preview
+                <span style="float:right; font-size:0.7rem; opacity:0.6;">As students will see it</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border);">
+                    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:0.4rem;">
+                        <strong id="previewTitle" style="font-size:0.9rem; color:var(--text,#1a2035);">@Model.Title</strong>
+                        <small class="text-muted" style="white-space:nowrap; font-size:0.78rem;">@Model.DatePosted.ToString("MMM dd, yyyy")</small>
+                    </div>
+                    <p id="previewMessage" style="margin:0; font-size:0.875rem; color:var(--text-muted,#5a6478); line-height:1.6; white-space:pre-wrap;">@Model.Message</p>
+                </div>
+                <div style="padding:0.6rem 1.25rem; background:#f8f9fa; font-size:0.75rem; color:#888; display:flex; align-items:center; gap:0.4rem;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:#1e8a5e; display:inline-block;"></span>
+                    Visible to all students on their dashboard
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:1rem; border:1px solid #f5c6cb;">
+            <div class="card-header" style="background:#fff5f5; color:#c0392b; font-size:0.85rem;">🗑 Danger Zone</div>
+            <div class="card-body" style="padding:1rem 1.25rem;">
+                <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.75rem;">Permanently delete this announcement. This cannot be undone.</p>
+                <form asp-controller="Admin" asp-action="DeleteAnnouncement" method="post"
+                      onsubmit="return confirm('Delete this announcement? This cannot be undone.');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger btn-sm">🗑 Delete Announcement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const origTitle   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Title));
+    const origMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Message));
+    let isDirty = false;
+
+    function updatePreview() {
+        const t = document.getElementById('titleInput').value;
+        const m = document.getElementById('messageInput').value;
+        document.getElementById('previewTitle').textContent   = t || '(no title)';
+        document.getElementById('previewMessage').textContent = m || '(no message)';
+        document.getElementById('titleCount').textContent     = t.length + ' / 120';
+        document.getElementById('msgCount').textContent       = m.length + ' / 1000';
+    }
+
+    function markDirty() {
+        const t = document.getElementById('titleInput').value;
+        const m = document.getElementById('messageInput').value;
+        isDirty = (t !== origTitle || m !== origMessage);
+        document.getElementById('dirtyBanner').style.display = isDirty ? 'block' : 'none';
+    }
+
+    function resetForm() {
+        document.getElementById('titleInput').value   = origTitle;
+        document.getElementById('messageInput').value = origMessage;
+        isDirty = false;
+        document.getElementById('dirtyBanner').style.display = 'none';
+        updatePreview();
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    document.getElementById('editForm').addEventListener('submit', function () {
+        isDirty = false;
+    });
+
+    updatePreview();
+</script>

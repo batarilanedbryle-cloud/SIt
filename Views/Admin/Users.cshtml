@@ -1,0 +1,346 @@
+@model List<Batarilan_Exercise1.Models.UserAccount>
+@{
+    ViewData["Title"] = "Registered Students";
+    var courses = ViewBag.Courses as List<string> ?? new List<string>();
+    var search  = ViewBag.Search  as string ?? "";
+    var course  = ViewBag.Course  as string ?? "";
+    var sortBy  = ViewBag.SortBy  as string ?? "name";
+    int total   = (int)(ViewBag.Total ?? (Model?.Count ?? 0));
+}
+
+<div class="page-header">
+    <div>
+        <h3>👥 Registered Students</h3>
+        <p class="page-subtitle">
+            @total student@(total != 1 ? "s" : "") found
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <span> — filtered by "<strong>@search</strong>"</span>
+            }
+        </p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<!-- ── Filter Bar ── -->
+<div class="card" style="margin-bottom:1rem;">
+    <div class="card-body" style="padding:0.85rem 1rem;">
+        <form method="get" style="display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap;">
+
+            <input name="search" value="@search" class="form-control"
+                   placeholder="Search by name, ID, email, course…"
+                   style="flex:1; min-width:200px;" />
+
+            <!-- FIX: use plain HTML selected attribute, no C# ternary inside option tag -->
+            <select name="course" class="form-control" style="width:160px;">
+                <option value="">All Courses</option>
+                @foreach (var c in courses)
+                {
+                    if (c == course)
+                    {
+                        <option value="@c" selected="selected">@c</option>
+                    }
+                    else
+                    {
+                        <option value="@c">@c</option>
+                    }
+                }
+            </select>
+
+            <select name="sortBy" class="form-control" style="width:160px;">
+                @{
+                    var sorts = new Dictionary<string, string> {
+                        { "name",   "Sort: Name"     },
+                        { "id",     "Sort: ID Number"},
+                        { "course", "Sort: Course"   },
+                        { "points", "Sort: Points ↓" }
+                    };
+                }
+                @foreach (var s in sorts)
+                {
+                    if (s.Key == sortBy)
+                    {
+                        <option value="@s.Key" selected="selected">@s.Value</option>
+                    }
+                    else
+                    {
+                        <option value="@s.Key">@s.Value</option>
+                    }
+                }
+            </select>
+
+            <button type="submit" class="btn btn-primary">🔍 Filter</button>
+            <a asp-action="Users" class="btn btn-outline-secondary">Clear</a>
+        </form>
+    </div>
+</div>
+
+<!-- ── Students Table ── -->
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        @if (Model == null || !Model.Any())
+        {
+            <div style="text-align:center; padding:3rem 2rem;">
+                <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">👥</div>
+                <p style="color:var(--text-muted); margin:0;">
+                    @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(course))
+                    {
+                        <text>No students match your filters.</text>
+                    }
+                    else
+                    {
+                        <text>No registered students yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
+             int row = 1; 
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Course</th>
+                        <th>Year</th>
+                        <th style="text-align:center;">Points</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        string initials = "";
+                        if (!string.IsNullOrEmpty(u.FirstName)) initials += u.FirstName[0];
+                        if (!string.IsNullOrEmpty(u.LastName))  initials += u.LastName[0];
+
+                        string fullName = (u.FirstName + " " + u.MiddleName + " " + u.LastName)
+                                            .Replace("  ", " ").Trim();
+
+                        // FIX: escape single quotes so onclick strings don't break
+                        string safeName    = fullName.Replace("'", "\\'");
+                        string safeIdNum   = (u.IdNumber   ?? "").Replace("'", "\\'");
+                        string safeEmail   = (u.Email      ?? "").Replace("'", "\\'");
+                        string safeCourse  = (u.Course     ?? "").Replace("'", "\\'");
+                        string safeYear    = (u.CourseLevel ?? "").Replace("'", "\\'");
+                        string safeAddress = (u.Address    ?? "").Replace("'", "\\'");
+
+                        <tr>
+                            <td style="color:var(--text-muted); font-size:0.82rem;">@row</td>
+
+                            <td style="font-weight:600; font-size:0.875rem;">@u.IdNumber</td>
+
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <div style="width:32px; height:32px; background:linear-gradient(135deg,var(--navy-light),var(--navy)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; color:white; flex-shrink:0;">
+                                        @initials
+                                    </div>
+                                    <div style="font-weight:600; font-size:0.875rem;">@fullName</div>
+                                </div>
+                            </td>
+
+                            <td style="color:var(--text-muted); font-size:0.85rem;">@u.Email</td>
+
+                            <td>
+                                <span style="background:#eef2fb; color:var(--navy-light); font-size:0.75rem; font-weight:600; padding:0.15rem 0.55rem; border-radius:20px;">
+                                    @u.Course
+                                </span>
+                            </td>
+
+                            <td style="font-size:0.875rem;">@u.CourseLevel</td>
+
+                            <td style="text-align:center;">
+                                @if (u.Points > 0)
+                                {
+                                    <span style="background:var(--accent-lt); color:#b57f18; font-weight:700; font-size:0.82rem; padding:0.15rem 0.6rem; border-radius:20px;">
+                                        ⭐ @u.Points
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color:var(--text-muted); font-size:0.82rem;">—</span>
+                                }
+                            </td>
+
+                            <td style="text-align:right;">
+                                <div style="display:flex; gap:0.35rem; justify-content:flex-end;">
+
+                                    <!-- View Details -->
+                                    <button type="button" class="btn btn-primary btn-sm"
+                                            onclick="openDetail('@safeIdNum','@safeName','@safeEmail','@safeCourse','@safeYear','@safeAddress',@u.Points)"
+                                            title="View Details">
+                                        👁 View
+                                    </button>
+
+                                    <!-- Give Points -->
+                                    <button type="button" class="btn btn-sm"
+                                            style="background:var(--accent-lt); color:#b57f18; font-weight:600;"
+                                            onclick="openGivePoints(@u.Id,'@safeName',@u.Points)"
+                                            title="Give Points">
+                                        ⭐ Points
+                                    </button>
+
+                                    <!-- Delete -->
+                                    <form asp-controller="Admin" asp-action="Delete" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Delete this student? This cannot be undone.');"
+                                                title="Delete">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        row++;
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div style="padding:0.65rem 1rem; border-top:1px solid var(--border); background:#fafbfd; font-size:0.8rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+            <span>Showing <strong>@Model.Count</strong> student@(Model.Count != 1 ? "s" : "")</span>
+            <span>Total points awarded: <strong>@Model.Sum(u => u.Points)</strong></span>
+        </div>
+    }
+</div>
+
+
+<!-- ── Student Detail Modal ── -->
+<div id="detailModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); width:100%; max-width:480px; margin:1rem; overflow:hidden;">
+        <div style="background:var(--navy); color:white; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-weight:600; font-size:1rem;">👤 Student Details</span>
+            <button onclick="closeDetail()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="padding:1.5rem;">
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; padding-bottom:1.1rem; border-bottom:2px solid var(--border);">
+                <div id="d-avatar" style="width:56px; height:56px; background:linear-gradient(135deg,var(--navy-light),var(--navy)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:white; flex-shrink:0;"></div>
+                <div>
+                    <div id="d-name"  style="font-size:1.1rem; font-weight:700; color:var(--navy);"></div>
+                    <div id="d-email" style="font-size:0.82rem; color:var(--text-muted);"></div>
+                </div>
+            </div>
+            <div class="info-row"><span class="info-key">ID Number</span><span class="info-val" id="d-idnum"></span></div>
+            <div class="info-row"><span class="info-key">Course</span>   <span class="info-val" id="d-course"></span></div>
+            <div class="info-row"><span class="info-key">Year Level</span><span class="info-val" id="d-year"></span></div>
+            <div class="info-row"><span class="info-key">Address</span>  <span class="info-val" id="d-address"></span></div>
+            <div class="info-row">
+                <span class="info-key">Points</span>
+                <span class="info-val" id="d-points" style="font-weight:700; color:#b57f18;"></span>
+            </div>
+        </div>
+        <div style="padding:0.85rem 1.25rem; border-top:1px solid var(--border); background:#fafbfd; text-align:right;">
+            <button onclick="closeDetail()" class="btn btn-outline-secondary btn-sm">Close</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Give Points Modal ── -->
+<div id="pointsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); width:100%; max-width:400px; margin:1rem; overflow:hidden;">
+        <div style="background:var(--navy); color:white; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-weight:600; font-size:1rem;">⭐ Give Points</span>
+            <button onclick="closePoints()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <form asp-controller="Admin" asp-action="GivePoints" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="userId"    id="gp-userid" />
+            <input type="hidden" name="returnUrl" value="/Admin/Users" />
+            <div style="padding:1.25rem;">
+                <div style="background:var(--accent-lt); border-radius:8px; padding:0.65rem 0.9rem; margin-bottom:1rem;">
+                    <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#b57f18;">Awarding to</div>
+                    <div id="gp-name"    style="font-weight:700; font-size:1rem; color:var(--navy);"></div>
+                    <div style="font-size:0.8rem; color:#b57f18;">Current points: <strong id="gp-current"></strong></div>
+                </div>
+
+                <div style="margin-bottom:0.85rem;">
+                    <label class="form-label">Points to Award</label>
+                    <input type="number" name="points" id="gp-points"
+                           class="form-control" min="1" max="999"
+                           placeholder="e.g. 5" required />
+                    <div style="display:flex; gap:0.4rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('gp-points').value=1">+1</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('gp-points').value=3">+3</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('gp-points').value=5">+5</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('gp-points').value=10">+10</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Reason</label>
+                    <input type="text" name="reason" id="gp-reason"
+                           class="form-control"
+                           placeholder="e.g. Perfect attendance" maxlength="150" />
+                    <div style="display:flex; gap:0.35rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;" onclick="document.getElementById('gp-reason').value='Perfect attendance'">Perfect attendance</button>
+                        <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;" onclick="document.getElementById('gp-reason').value='Good lab conduct'">Good lab conduct</button>
+                        <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;" onclick="document.getElementById('gp-reason').value='Outstanding performance'">Outstanding performance</button>
+                        <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;" onclick="document.getElementById('gp-reason').value='Helping fellow students'">Helping fellow students</button>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:0.85rem 1.25rem; border-top:1px solid var(--border); background:#fafbfd; display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" onclick="closePoints()" class="btn btn-outline-secondary btn-sm">Cancel</button>
+                <button type="submit" class="btn btn-success btn-sm">⭐ Award Points</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    // Detail modal
+    function openDetail(idnum, name, email, course, year, address, points) {
+        var parts = name.split(' ').filter(Boolean);
+        var initials = parts.slice(0, 2).map(function(n){ return n[0]; }).join('');
+        document.getElementById('d-avatar').textContent  = initials;
+        document.getElementById('d-name').textContent    = name;
+        document.getElementById('d-email').textContent   = email;
+        document.getElementById('d-idnum').textContent   = idnum;
+        document.getElementById('d-course').textContent  = course;
+        document.getElementById('d-year').textContent    = year;
+        document.getElementById('d-address').textContent = address || '—';
+        document.getElementById('d-points').textContent  = points > 0 ? '⭐ ' + points + ' pts' : '0 pts';
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+    function closeDetail() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    // Points modal
+    function openGivePoints(userId, name, currentPts) {
+        document.getElementById('gp-userid').value       = userId;
+        document.getElementById('gp-name').textContent   = name;
+        document.getElementById('gp-current').textContent = currentPts;
+        document.getElementById('gp-points').value       = '';
+        document.getElementById('gp-reason').value       = '';
+        document.getElementById('pointsModal').style.display = 'flex';
+    }
+    function closePoints() {
+        document.getElementById('pointsModal').style.display = 'none';
+    }
+
+    // Close on backdrop click
+    document.getElementById('detailModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDetail();
+    });
+    document.getElementById('pointsModal').addEventListener('click', function(e) {
+        if (e.target === this) closePoints();
+    });
+</script>

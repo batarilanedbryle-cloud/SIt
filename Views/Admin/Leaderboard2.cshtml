@@ -1,0 +1,137 @@
+@model List<Batarilan_Exercise1.Models.UserAccount>
+@{
+    ViewData["Title"] = "Leaderboard";
+    var rewardCounts = ViewBag.RewardCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var sitInCounts  = ViewBag.SitInCounts  as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<div class="page-header">
+    <div>
+        <h3>🏆 Student Leaderboard</h3>
+        <p class="page-subtitle">Top performers ranked by total reward points</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body" style="text-align:center; padding:3rem 2rem;">
+            <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">🏆</div>
+            <p style="color:var(--text-muted); margin:0;">No students yet.</p>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Top 3 podium -->
+    @if (Model.Count >= 3)
+    {
+        <div style="display:flex; align-items:flex-end; justify-content:center; gap:1rem; margin-bottom:2rem;">
+
+            <!-- 2nd place -->
+            <div style="text-align:center; flex:1; max-width:200px;">
+                <div style="font-size:1.75rem; margin-bottom:0.35rem;">🥈</div>
+                <div style="background:var(--white); border:2px solid #c0c0c0; border-radius:var(--radius-lg); padding:1rem 0.75rem; box-shadow:var(--shadow-sm);">
+                    <div style="width:48px; height:48px; background:linear-gradient(135deg,#9ca3af,#6b7280); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color:white; margin:0 auto 0.6rem;">
+                        @{ string i2 = ""; if(!string.IsNullOrEmpty(Model[1].FirstName)) i2 += Model[1].FirstName[0]; if(!string.IsNullOrEmpty(Model[1].LastName)) i2 += Model[1].LastName[0]; }
+                        @i2
+                    </div>
+                    <div style="font-weight:700; font-size:0.9rem; color:var(--navy);">@Model[1].FirstName @Model[1].LastName</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">@Model[1].Course</div>
+                    <div style="font-family:'DM Serif Display',serif; font-size:1.5rem; color:#6b7280; margin-top:0.4rem;">@Model[1].Points pts</div>
+                </div>
+                <div style="height:60px; background:#e5e7eb; border-radius:4px 4px 0 0; margin-top:0.5rem;"></div>
+            </div>
+
+            <!-- 1st place -->
+            <div style="text-align:center; flex:1; max-width:220px;">
+                <div style="font-size:2rem; margin-bottom:0.35rem;">🥇</div>
+                <div style="background:var(--white); border:2px solid var(--accent); border-radius:var(--radius-lg); padding:1.25rem 0.75rem; box-shadow:var(--shadow);">
+                    <div style="width:56px; height:56px; background:linear-gradient(135deg,var(--accent),#b57f18); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:white; margin:0 auto 0.6rem;">
+                        @{ string i1 = ""; if(!string.IsNullOrEmpty(Model[0].FirstName)) i1 += Model[0].FirstName[0]; if(!string.IsNullOrEmpty(Model[0].LastName)) i1 += Model[0].LastName[0]; }
+                        @i1
+                    </div>
+                    <div style="font-weight:700; font-size:1rem; color:var(--navy);">@Model[0].FirstName @Model[0].LastName</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">@Model[0].Course</div>
+                    <div style="font-family:'DM Serif Display',serif; font-size:1.75rem; color:#b57f18; margin-top:0.4rem;">@Model[0].Points pts</div>
+                </div>
+                <div style="height:90px; background:var(--accent-lt); border-radius:4px 4px 0 0; margin-top:0.5rem;"></div>
+            </div>
+
+            <!-- 3rd place -->
+            <div style="text-align:center; flex:1; max-width:200px;">
+                <div style="font-size:1.75rem; margin-bottom:0.35rem;">🥉</div>
+                <div style="background:var(--white); border:2px solid #cd7f32; border-radius:var(--radius-lg); padding:1rem 0.75rem; box-shadow:var(--shadow-sm);">
+                    <div style="width:48px; height:48px; background:linear-gradient(135deg,#d97706,#92400e); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700; color:white; margin:0 auto 0.6rem;">
+                        @{ string i3 = ""; if(!string.IsNullOrEmpty(Model[2].FirstName)) i3 += Model[2].FirstName[0]; if(!string.IsNullOrEmpty(Model[2].LastName)) i3 += Model[2].LastName[0]; }
+                        @i3
+                    </div>
+                    <div style="font-weight:700; font-size:0.9rem; color:var(--navy);">@Model[2].FirstName @Model[2].LastName</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">@Model[2].Course</div>
+                    <div style="font-family:'DM Serif Display',serif; font-size:1.5rem; color:#92400e; margin-top:0.4rem;">@Model[2].Points pts</div>
+                </div>
+                <div style="height:40px; background:#fde68a; border-radius:4px 4px 0 0; margin-top:0.5rem;"></div>
+            </div>
+        </div>
+    }
+
+    <!-- Full rankings table -->
+    <div class="card">
+        <div class="card-header" style="background:var(--navy); color:white;">🏅 Full Rankings</div>
+        <div class="card-body" style="padding:0;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">Rank</th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th style="text-align:center;">Sit-Ins</th>
+                        <th style="text-align:center;">Rewards</th>
+                        <th style="text-align:center;">Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int rank = 1; }
+                    @foreach (var u in Model)
+                    {
+                        string medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : rank.ToString();
+                        string rowBg = rank <= 3 ? "background:#fffbf0;" : "";
+                        string init = "";
+                        if (!string.IsNullOrEmpty(u.FirstName)) init += u.FirstName[0];
+                        if (!string.IsNullOrEmpty(u.LastName))  init += u.LastName[0];
+                        int sCount = sitInCounts.ContainsKey(u.Id)  ? sitInCounts[u.Id]  : 0;
+                        int rCount = rewardCounts.ContainsKey(u.Id) ? rewardCounts[u.Id] : 0;
+
+                        <tr style="@rowBg">
+                            <td style="text-align:center; font-size:@(rank <= 3 ? "1.1rem" : "0.875rem"); font-weight:700;">@medal</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <div style="width:32px; height:32px; background:linear-gradient(135deg,var(--navy-light),var(--navy)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:white; flex-shrink:0;">@init</div>
+                                    <div>
+                                        <div style="font-weight:600; font-size:0.875rem;">@u.FirstName @u.LastName</div>
+                                        <div style="font-size:0.75rem; color:var(--text-muted);">@u.IdNumber</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span style="background:#eef2fb; color:var(--navy-light); font-size:0.75rem; font-weight:600; padding:0.15rem 0.55rem; border-radius:20px;">@u.Course</span></td>
+                            <td style="text-align:center; font-weight:600;">@sCount</td>
+                            <td style="text-align:center; font-weight:600;">@rCount</td>
+                            <td style="text-align:center;">
+                                @if (u.Points > 0)
+                                {
+                                    <span style="background:var(--accent-lt); color:#b57f18; font-weight:700; font-size:0.875rem; padding:0.2rem 0.7rem; border-radius:20px;">⭐ @u.Points</span>
+                                }
+                                else
+                                {
+                                    <span style="color:var(--text-muted);">—</span>
+                                }
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

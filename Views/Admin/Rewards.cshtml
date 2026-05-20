@@ -1,0 +1,227 @@
+@{
+    ViewData["Title"] = "Rewards & Points";
+    var students = ViewBag.Students as List<Batarilan_Exercise1.Models.UserAccount> ?? new List<Batarilan_Exercise1.Models.UserAccount>();
+    var rewardHistory = ViewBag.RewardHistory as List<Batarilan_Exercise1.Models.Reward> ?? new List<Batarilan_Exercise1.Models.Reward>();
+}
+
+<div class="page-header">
+    <div>
+        <h3>⭐ Rewards &amp; Points</h3>
+        <p class="page-subtitle">Give points to students for good performance</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div style="display:grid; grid-template-columns:380px 1fr; gap:1.25rem; align-items:start;">
+
+    <!-- ── Give Points Form ── -->
+    <div style="position:sticky; top:1.5rem;">
+        <div class="card">
+            <div class="card-header" style="background:var(--navy); color:white;">
+                🎁 Give Points to Student
+            </div>
+            <div class="card-body">
+                <form asp-controller="Admin" asp-action="GivePoints" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div style="margin-bottom:0.85rem;">
+                        <label class="form-label">Select Student</label>
+                        <select name="userId" class="form-control" required id="studentSelect">
+                            <option value="">— Choose a student —</option>
+                            @foreach (var s in students)
+                            {
+                                <option value="@s.Id" data-points="@s.Points">
+                                    @s.FirstName @s.LastName — @s.IdNumber (@s.Course)
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Live current points preview -->
+                    <div id="currentPointsBox" style="display:none; background:var(--accent-lt); border-radius:8px; padding:0.65rem 0.9rem; margin-bottom:0.85rem;">
+                        <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#b57f18;">Current Points</div>
+                        <div id="currentPointsVal" style="font-size:1.5rem; font-weight:700; color:var(--navy); font-family:'DM Serif Display',serif;">0</div>
+                    </div>
+
+                    <div style="margin-bottom:0.85rem;">
+                        <label class="form-label">Points to Award</label>
+                        <input type="number" name="points" class="form-control" min="1" max="999"
+                               placeholder="e.g. 5" required id="pointsInput" />
+                    </div>
+
+                    <!-- Quick point presets -->
+                    <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); align-self:center; font-weight:600;">Quick:</span>
+                        @foreach (var pts in new[] { 1, 3, 5, 10 })
+                        {
+                            <button type="button" class="btn btn-outline-secondary btn-sm preset-btn"
+                                    data-pts="@pts" onclick="setPoints(@pts)">+@pts</button>
+                        }
+                    </div>
+
+                    <div style="margin-bottom:1rem;">
+                        <label class="form-label">Reason</label>
+                        <input type="text" name="reason" class="form-control"
+                               placeholder="e.g. Perfect attendance, Good conduct..." maxlength="150" />
+                        <!-- Quick reason presets -->
+                        <div style="display:flex; gap:0.35rem; margin-top:0.5rem; flex-wrap:wrap;">
+                            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600; align-self:center;">Quick:</span>
+                            <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;"
+                                    onclick="setReason('Perfect attendance')">Perfect attendance</button>
+                            <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;"
+                                    onclick="setReason('Good lab conduct')">Good lab conduct</button>
+                            <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;"
+                                    onclick="setReason('Outstanding performance')">Outstanding performance</button>
+                            <button type="button" class="btn btn-sm" style="font-size:0.72rem; padding:0.15rem 0.55rem; background:#f0f4ff; color:var(--navy-light); border-radius:4px;"
+                                    onclick="setReason('Helping fellow students')">Helping fellow students</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success" style="width:100%; justify-content:center; padding:0.65rem;">
+                        ⭐ Award Points
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Top Students Leaderboard (mini) ── -->
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header" style="background:var(--accent-lt); color:var(--navy); border-bottom-color:rgba(232,160,32,0.25);">
+                🏆 Top Students by Points
+            </div>
+            <div class="card-body" style="padding:0;">
+                @{
+                    var top = students.OrderByDescending(s => s.Points).Take(5).ToList();
+                }
+                @if (!top.Any())
+                {
+                    <p class="text-muted" style="margin:1rem; font-size:0.875rem;">No data yet.</p>
+                }
+                else
+                {
+                    int rank = 1;
+                    foreach (var s in top)
+                    {
+                        string medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : $"{rank}.";
+                        <div style="display:flex; align-items:center; gap:0.75rem; padding:0.7rem 1rem; border-bottom:1px solid var(--border);">
+                            <span style="font-size:1.1rem; min-width:24px; text-align:center;">@medal</span>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:600; font-size:0.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@s.FirstName @s.LastName</div>
+                                <div style="font-size:0.78rem; color:var(--text-muted);">@s.Course · @s.IdNumber</div>
+                            </div>
+                            <div style="font-family:'DM Serif Display',serif; font-size:1.1rem; font-weight:700; color:#b57f18;">@s.Points</div>
+                        </div>
+                        rank++;
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Reward History Table ── -->
+    <div class="card">
+        <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>📜 Reward History</span>
+            <span style="font-size:0.8rem; color:var(--text-muted); font-weight:400;">@rewardHistory.Count total entries</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+            @if (!rewardHistory.Any())
+            {
+                <div style="text-align:center; padding:3rem 2rem; color:var(--text-muted);">
+                    <div style="font-size:2.5rem; margin-bottom:0.75rem; opacity:0.4;">⭐</div>
+                    <p style="margin:0; font-size:0.9rem;">No rewards have been given yet.</p>
+                </div>
+            }
+            else
+            {
+                <!-- Search filter -->
+                <div style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); background:#f9fafc;">
+                    <input type="text" id="rewardSearch" class="form-control"
+                           placeholder="Filter by student name or reason..."
+                           style="font-size:0.85rem;" onkeyup="filterRewards()" />
+                </div>
+
+                <table style="width:100%; border-collapse:collapse; font-size:0.875rem;" id="rewardTable">
+                    <thead>
+                        <tr>
+                            <th style="padding:0.7rem 1rem; font-size:0.7rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); border-bottom:2px solid var(--border); background:#f9fafc; text-align:left;">Student</th>
+                            <th style="padding:0.7rem 1rem; font-size:0.7rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); border-bottom:2px solid var(--border); background:#f9fafc; text-align:left;">Reason</th>
+                            <th style="padding:0.7rem 1rem; font-size:0.7rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); border-bottom:2px solid var(--border); background:#f9fafc; text-align:center;">Points</th>
+                            <th style="padding:0.7rem 1rem; font-size:0.7rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); border-bottom:2px solid var(--border); background:#f9fafc; text-align:left;">Date</th>
+                            <th style="padding:0.7rem 1rem; border-bottom:2px solid var(--border); background:#f9fafc;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in rewardHistory)
+                        {
+                            <tr class="reward-row">
+                                <td style="padding:0.75rem 1rem; border-bottom:1px solid var(--border);">
+                                    <div style="font-weight:600;">@r.StudentName</div>
+                                </td>
+                                <td style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); color:var(--text-muted);">@r.Reason</td>
+                                <td style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); text-align:center;">
+                                    <span style="background:var(--accent-lt); color:#b57f18; font-weight:700; font-size:0.875rem; padding:0.2rem 0.65rem; border-radius:20px;">+@r.Points</span>
+                                </td>
+                                <td style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); color:var(--text-muted); font-size:0.82rem;">
+                                    @r.DateEarned.ToString("MMM dd, yyyy · h:mm tt")
+                                </td>
+                                <td style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); text-align:right;">
+                                    <form asp-controller="Admin" asp-action="RevokePoints" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="rewardId" value="@r.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('Remove this reward entry? This will also deduct the points from the student.');"
+                                                title="Revoke reward">✕</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Show current points when student is selected
+    document.getElementById('studentSelect')?.addEventListener('change', function () {
+        const opt = this.options[this.selectedIndex];
+        const pts = opt.dataset.points;
+        const box = document.getElementById('currentPointsBox');
+        if (pts !== undefined && this.value !== '') {
+            document.getElementById('currentPointsVal').textContent = pts;
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    });
+
+    function setPoints(n) {
+        const inp = document.getElementById('pointsInput');
+        if (inp) inp.value = n;
+    }
+
+    function setReason(text) {
+        const inp = document.querySelector('input[name="reason"]');
+        if (inp) inp.value = text;
+    }
+
+    function filterRewards() {
+        const q = document.getElementById('rewardSearch').value.toLowerCase();
+        document.querySelectorAll('#rewardTable .reward-row').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(q) ? '' : 'none';
+        });
+    }
+</script>

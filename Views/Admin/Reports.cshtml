@@ -1,0 +1,464 @@
+@using Batarilan_Exercise1.Models
+@{
+    ViewData["Title"] = "Generate Reports";
+    int sitInCount       = (int)(ViewBag.SitInCount       ?? 0);
+    int studentCount     = (int)(ViewBag.StudentCount     ?? 0);
+    int rewardCount      = (int)(ViewBag.RewardCount      ?? 0);
+    int reservationCount = (int)(ViewBag.ReservationCount ?? 0);
+
+    var allReservations = ViewBag.AllReservations as List<Reservation> ?? new List<Reservation>();
+    var sitInLogs       = ViewBag.SitInLogs       as List<SitIn>       ?? new List<SitIn>();
+}
+
+<div class="page-header">
+    <div>
+        <h3>📊 Generate Reports</h3>
+        <p class="page-subtitle">Export data, view reservations per lab, and review sit-in logs</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+<!-- ── TAB NAVIGATION ─────────────────────────────────────────────────────── -->
+<div style="display:flex; gap:0.4rem; margin-bottom:1.5rem; flex-wrap:wrap; border-bottom:2px solid var(--border); padding-bottom:0.6rem;">
+    <button onclick="showTab('exports')"   id="tab-exports"       class="report-tab report-tab-active">📥 Export CSV</button>
+    <button onclick="showTab('perlab')"    id="tab-perlab"        class="report-tab">🏫 Reports per Lab</button>
+    <button onclick="showTab('reservlist')"id="tab-reservlist"    class="report-tab">📅 All Reservations</button>
+    <button onclick="showTab('logs')"      id="tab-logs"          class="report-tab">🖥 Sit-In Logs</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 1 — EXPORT CSV
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="pane-exports">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+
+        <!-- Sit-In Report -->
+        <div class="card">
+            <div class="card-header" style="background:var(--navy); color:white; display:flex; align-items:center; gap:0.6rem;">
+                <span style="font-size:1.2rem;">🖥</span> Sit-In Sessions Report
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.6;">
+                    Export all sit-in session records including student name, purpose, time in/out, duration, and status.
+                </p>
+                <div style="background:var(--surface); border-radius:var(--radius); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:0.82rem; color:var(--text-muted);">Total records</span>
+                    <span style="font-weight:700; font-size:1.1rem; color:var(--navy);">@sitInCount</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    <strong>Columns:</strong> ID, Student Name, Purpose, Time In, Time Out, Duration (min), Status
+                </div>
+                <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="sitin"
+                   class="btn btn-primary" style="width:100%; justify-content:center; display:block; text-align:center;">
+                    ⬇ Download Sit-In CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Students Report -->
+        <div class="card">
+            <div class="card-header" style="background:var(--navy-mid); color:white; display:flex; align-items:center; gap:0.6rem;">
+                <span style="font-size:1.2rem;">👥</span> Registered Students Report
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.6;">
+                    Export a complete list of all registered students with their personal details, course, and total points.
+                </p>
+                <div style="background:var(--surface); border-radius:var(--radius); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:0.82rem; color:var(--text-muted);">Total students</span>
+                    <span style="font-weight:700; font-size:1.1rem; color:var(--navy);">@studentCount</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    <strong>Columns:</strong> ID Number, Last Name, First Name, Middle Name, Course, Year Level, Email, Address, Points
+                </div>
+                <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="students"
+                   class="btn btn-primary" style="width:100%; justify-content:center; display:block; text-align:center;">
+                    ⬇ Download Students CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Rewards Report -->
+        <div class="card">
+            <div class="card-header" style="background:var(--accent-lt); color:var(--navy); border-bottom:1px solid rgba(232,160,32,0.3); display:flex; align-items:center; gap:0.6rem;">
+                <span style="font-size:1.2rem;">⭐</span> Rewards &amp; Points Report
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.6;">
+                    Export all reward entries including student name, points awarded, reason, and date earned.
+                </p>
+                <div style="background:var(--surface); border-radius:var(--radius); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:0.82rem; color:var(--text-muted);">Total entries</span>
+                    <span style="font-weight:700; font-size:1.1rem; color:var(--navy);">@rewardCount</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    <strong>Columns:</strong> ID, Student Name, Points, Reason, Date Earned
+                </div>
+                <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="rewards"
+                   class="btn btn-warning" style="width:100%; justify-content:center; display:block; text-align:center; color:var(--navy);">
+                    ⬇ Download Rewards CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Reservations Report -->
+        <div class="card">
+            <div class="card-header" style="background:#e6f7f0; color:var(--success); border-bottom:1px solid rgba(30,138,94,0.2); display:flex; align-items:center; gap:0.6rem;">
+                <span style="font-size:1.2rem;">📅</span> Reservations Report
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.6;">
+                    Export all lab reservation requests including student name, purpose, date, room, PC number, and status.
+                </p>
+                <div style="background:var(--surface); border-radius:var(--radius); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:0.82rem; color:var(--text-muted);">Total reservations</span>
+                    <span style="font-weight:700; font-size:1.1rem; color:var(--navy);">@reservationCount</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                    <strong>Columns:</strong> ID, Student Name, Purpose, Reservation Date, Room, PC Number, Status, Created
+                </div>
+                <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="reservations"
+                   class="btn btn-success" style="width:100%; justify-content:center; display:block; text-align:center;">
+                    ⬇ Download Reservations CSV
+                </a>
+            </div>
+        </div>
+
+    </div>
+    <div style="margin-top:1.25rem; padding:1rem 1.25rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); font-size:0.82rem; color:var(--text-muted);">
+        💡 <strong>Tip:</strong> All reports are exported in CSV format. Open them in Microsoft Excel or Google Sheets for further analysis.
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 2 — REPORTS PER LAB
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="pane-perlab" style="display:none;">
+    <div style="margin-bottom:1.25rem; padding:0.9rem 1.1rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); font-size:0.85rem; color:var(--text-muted);">
+        📋 Showing reservation counts grouped by lab room. Use the <strong>All Reservations</strong> tab to see individual records.
+    </div>
+
+    @{
+        // Rebuild from ViewBag safely using anonymous-type projection via dynamic
+        var rawGroups = ViewBag.LabGroups as System.Collections.IEnumerable;
+    }
+
+    @if (rawGroups == null || !((IEnumerable<dynamic>)rawGroups).Any())
+    {
+        <div class="card">
+            <div class="card-body" style="text-align:center; padding:3rem 2rem;">
+                <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">🏫</div>
+                <p style="color:var(--text-muted); margin:0;">No reservation data found per lab yet.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Summary cards grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; margin-bottom:1.5rem;">
+            @foreach (dynamic lab in (IEnumerable<dynamic>)rawGroups)
+            {
+                <div class="card" style="border-top:4px solid var(--navy-light);">
+                    <div class="card-body" style="padding:1.1rem;">
+                        <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:0.3rem;">Lab Room</div>
+                        <div style="font-size:1.15rem; font-weight:700; color:var(--navy); margin-bottom:0.85rem;">@lab.Room</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.4rem; text-align:center;">
+                            <div style="background:var(--surface); border-radius:6px; padding:0.45rem 0.3rem;">
+                                <div style="font-size:1.1rem; font-weight:700; color:var(--navy);">@lab.Total</div>
+                                <div style="font-size:0.68rem; color:var(--text-muted);">Total</div>
+                            </div>
+                            <div style="background:#e6f7f0; border-radius:6px; padding:0.45rem 0.3rem;">
+                                <div style="font-size:1.1rem; font-weight:700; color:var(--success);">@lab.Approved</div>
+                                <div style="font-size:0.68rem; color:var(--success);">Approved</div>
+                            </div>
+                            <div style="background:#fdeaea; border-radius:6px; padding:0.45rem 0.3rem;">
+                                <div style="font-size:1.1rem; font-weight:700; color:var(--danger);">@lab.Denied</div>
+                                <div style="font-size:0.68rem; color:var(--danger);">Denied</div>
+                            </div>
+                        </div>
+                        @if ((int)lab.Pending > 0)
+                        {
+                            <div style="margin-top:0.6rem; background:var(--accent-lt); border-radius:6px; padding:0.3rem 0.6rem; font-size:0.75rem; font-weight:600; color:#b57f18; text-align:center;">
+                                ⏳ @lab.Pending pending
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Per-lab detail table -->
+        <div class="card">
+            <div class="card-header" style="background:var(--navy); color:white;">🏫 Lab Summary Table</div>
+            <div class="card-body" style="padding:0;">
+                <table class="table" style="margin:0;">
+                    <thead>
+                        <tr>
+                            <th>Lab Room</th>
+                            <th style="text-align:center;">Total</th>
+                            <th style="text-align:center;">Pending</th>
+                            <th style="text-align:center;">Approved</th>
+                            <th style="text-align:center;">Denied</th>
+                            <th style="text-align:center;">Approval Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (dynamic lab in (IEnumerable<dynamic>)rawGroups)
+                        {
+                            int total    = (int)lab.Total;
+                            int approved = (int)lab.Approved;
+                            double rate  = total > 0 ? Math.Round((double)approved / total * 100, 1) : 0;
+                            <tr>
+                                <td style="font-weight:600;">@lab.Room</td>
+                                <td style="text-align:center;">@lab.Total</td>
+                                <td style="text-align:center;">
+                                    @if ((int)lab.Pending > 0)
+                                    {
+                                        <span style="background:var(--accent-lt); color:#b57f18; font-size:0.72rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:20px;">@lab.Pending</span>
+                                    }
+                                    else { <span style="color:var(--text-muted);">0</span> }
+                                </td>
+                                <td style="text-align:center;">
+                                    <span style="background:#e6f7f0; color:var(--success); font-size:0.72rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:20px;">@lab.Approved</span>
+                                </td>
+                                <td style="text-align:center;">
+                                    <span style="background:#fdeaea; color:var(--danger); font-size:0.72rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:20px;">@lab.Denied</span>
+                                </td>
+                                <td style="text-align:center;">
+                                    <div style="display:flex; align-items:center; gap:0.5rem; justify-content:center;">
+                                        <div style="width:70px; height:6px; background:#eee; border-radius:3px; overflow:hidden;">
+                                            <div style="width:@rate%; height:100%; background:var(--success); border-radius:3px;"></div>
+                                        </div>
+                                        <span style="font-size:0.78rem; font-weight:600; color:var(--success);">@rate%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 3 — ALL RESERVATIONS LIST
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="pane-reservlist" style="display:none;">
+
+    <!-- Search/filter bar -->
+    <div style="display:flex; gap:0.6rem; margin-bottom:1rem; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="reservSearch" placeholder="🔍  Search by student, room, purpose…"
+               onkeyup="filterTable('reservTable','reservSearch')"
+               style="flex:1; min-width:200px; padding:0.55rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.875rem; background:var(--white); color:var(--text);" />
+        <select id="reservStatusFilter" onchange="filterReservByStatus()"
+                style="padding:0.55rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.875rem; background:var(--white); color:var(--text);">
+            <option value="">All Statuses</option>
+            <option value="Pending">⏳ Pending</option>
+            <option value="Approved">✅ Approved</option>
+            <option value="Denied">✕ Denied</option>
+        </select>
+        <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="reservations"
+           class="btn btn-success btn-sm">⬇ Export CSV</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="background:var(--navy); color:white; display:flex; justify-content:space-between; align-items:center;">
+            <span>📅 All Reservations</span>
+            <span style="font-size:0.78rem; font-weight:400; opacity:0.75;">@allReservations.Count total</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+            @if (!allReservations.Any())
+            {
+                <div style="text-align:center; padding:3rem 2rem;">
+                    <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">📅</div>
+                    <p style="color:var(--text-muted); margin:0;">No reservations found.</p>
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x:auto;">
+                    <table class="table" id="reservTable" style="margin:0; min-width:700px;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student</th>
+                                <th>Purpose</th>
+                                <th>Date</th>
+                                <th>Room</th>
+                                <th>PC</th>
+                                <th style="text-align:center;">Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int rn = 1; }
+                            @foreach (var r in allReservations)
+                            {
+                                string statusBg = r.Status == "Approved" ? "#e6f7f0" : r.Status == "Denied" ? "#fdeaea" : "var(--accent-lt)";
+                                string statusClr = r.Status == "Approved" ? "var(--success)" : r.Status == "Denied" ? "var(--danger)" : "#b57f18";
+                                string statusIcon = r.Status == "Approved" ? "✅" : r.Status == "Denied" ? "✕" : "⏳";
+                                <tr data-status="@r.Status">
+                                    <td style="color:var(--text-muted); font-size:0.8rem;">@rn</td>
+                                    <td style="font-weight:600;">@r.StudentName</td>
+                                    <td style="color:var(--text-muted); font-size:0.85rem;">@r.Purpose</td>
+                                    <td style="font-size:0.85rem;">@r.ReservationDate.ToString("MMM dd, yyyy")</td>
+                                    <td style="font-weight:500;">@r.Room</td>
+                                    <td style="font-size:0.85rem; color:var(--text-muted);">@r.PcNumber</td>
+                                    <td style="text-align:center;">
+                                        <span style="background:@statusBg; color:@statusClr; font-size:0.72rem; font-weight:600; padding:0.2rem 0.65rem; border-radius:20px;">
+                                            @statusIcon @r.Status
+                                        </span>
+                                    </td>
+                                    <td style="font-size:0.78rem; color:var(--text-muted);">@r.DateCreated.ToString("MMM dd")</td>
+                                </tr>
+                                rn++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 4 — SIT-IN LOGS
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="pane-logs" style="display:none;">
+
+    <!-- Search bar -->
+    <div style="display:flex; gap:0.6rem; margin-bottom:1rem; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="logSearch" placeholder="🔍  Search by student or purpose…"
+               onkeyup="filterTable('logTable','logSearch')"
+               style="flex:1; min-width:200px; padding:0.55rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.875rem; background:var(--white); color:var(--text);" />
+        <select id="logStatusFilter" onchange="filterLogByStatus()"
+                style="padding:0.55rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.875rem; background:var(--white); color:var(--text);">
+            <option value="">All</option>
+            <option value="Active">🟢 Active</option>
+            <option value="Done">✅ Done</option>
+        </select>
+        <a asp-controller="Admin" asp-action="GenerateReport" asp-route-type="sitin"
+           class="btn btn-primary btn-sm">⬇ Export CSV</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="background:var(--navy); color:white; display:flex; justify-content:space-between; align-items:center;">
+            <span>🖥 Sit-In Session Logs</span>
+            <span style="font-size:0.78rem; font-weight:400; opacity:0.75;">@sitInLogs.Count total</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+            @if (!sitInLogs.Any())
+            {
+                <div style="text-align:center; padding:3rem 2rem;">
+                    <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">🖥</div>
+                    <p style="color:var(--text-muted); margin:0;">No sit-in logs found.</p>
+                </div>
+            }
+            else
+            {
+                <div style="overflow-x:auto;">
+                    <table class="table" id="logTable" style="margin:0; min-width:700px;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student</th>
+                                <th>Purpose</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th style="text-align:center;">Duration</th>
+                                <th style="text-align:center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int ln = 1; }
+                            @foreach (var s in sitInLogs)
+                            {
+                                string dur = s.TimeOut.HasValue
+                                    ? ((int)(s.TimeOut.Value - s.TimeIn).TotalMinutes) + " min"
+                                    : "—";
+                                string sBg  = s.Status == "Active" ? "#e6f7f0" : "var(--surface)";
+                                string sClr = s.Status == "Active" ? "var(--success)" : "var(--text-muted)";
+                                string sIcon = s.Status == "Active" ? "🟢" : "✅";
+                                <tr data-logstatus="@s.Status">
+                                    <td style="color:var(--text-muted); font-size:0.8rem;">@ln</td>
+                                    <td style="font-weight:600;">@s.StudentName</td>
+                                    <td style="color:var(--text-muted); font-size:0.85rem;">@s.Purpose</td>
+                                    <td style="font-size:0.85rem;">@s.TimeIn.ToString("MMM dd, yyyy HH:mm")</td>
+                                    <td style="font-size:0.85rem; color:var(--text-muted);">
+                                        @(s.TimeOut.HasValue ? s.TimeOut.Value.ToString("MMM dd, yyyy HH:mm") : "—")
+                                    </td>
+                                    <td style="text-align:center; font-size:0.85rem; font-weight:500;">@dur</td>
+                                    <td style="text-align:center;">
+                                        <span style="background:@sBg; color:@sClr; font-size:0.72rem; font-weight:600; padding:0.2rem 0.65rem; border-radius:20px;">
+                                            @sIcon @s.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                                ln++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .report-tab {
+        padding: 0.45rem 1.1rem;
+        border-radius: 8px 8px 0 0;
+        font-size: 0.83rem;
+        font-weight: 600;
+        border: 1.5px solid var(--border);
+        border-bottom: none;
+        background: var(--white);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-bottom: -2px;
+    }
+    .report-tab:hover { color: var(--navy); background: var(--surface); }
+    .report-tab-active { background: var(--navy) !important; color: white !important; border-color: var(--navy) !important; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 0.7rem 1rem; border-bottom: 1.5px solid var(--border); background: var(--surface); }
+    .table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover { background: #f8faff; }
+</style>
+
+<script>
+    function showTab(name) {
+        ['exports','perlab','reservlist','logs'].forEach(function(t) {
+            document.getElementById('pane-' + t).style.display = 'none';
+            document.getElementById('tab-'  + t).classList.remove('report-tab-active');
+        });
+        document.getElementById('pane-' + name).style.display = 'block';
+        document.getElementById('tab-'  + name).classList.add('report-tab-active');
+    }
+
+    function filterTable(tableId, inputId) {
+        var val = document.getElementById(inputId).value.toLowerCase();
+        var rows = document.getElementById(tableId).querySelectorAll('tbody tr');
+        rows.forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
+        });
+    }
+
+    function filterReservByStatus() {
+        var val = document.getElementById('reservStatusFilter').value;
+        var rows = document.getElementById('reservTable').querySelectorAll('tbody tr');
+        rows.forEach(function(row) {
+            row.style.display = (!val || row.getAttribute('data-status') === val) ? '' : 'none';
+        });
+    }
+
+    function filterLogByStatus() {
+        var val = document.getElementById('logStatusFilter').value;
+        var rows = document.getElementById('logTable').querySelectorAll('tbody tr');
+        rows.forEach(function(row) {
+            row.style.display = (!val || row.getAttribute('data-logstatus') === val) ? '' : 'none';
+        });
+    }
+</script>

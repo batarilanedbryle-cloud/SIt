@@ -1,0 +1,56 @@
+@model IEnumerable<Batarilan_Exercise1.Models.SitIn>
+@{
+    ViewData["Title"] = "Sit-In Records";
+}
+
+<div class="page-header">
+    <div>
+        <h3>Sit-In Records</h3>
+        <p class="page-subtitle">Complete history of all sessions</p>
+    </div>
+    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Back to Admin</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Purpose</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr><td colspan="6" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No records found</td></tr>
+                }
+                else
+                {
+                    foreach (var r in Model.OrderByDescending(x => x.TimeIn))
+                    {
+                        var duration = r.TimeOut.HasValue ? (r.TimeOut.Value - r.TimeIn) : (TimeSpan?)null;
+                        <tr>
+                            <td style="font-weight:500;">@r.StudentName</td>
+                            <td>@r.Purpose</td>
+                            <td style="font-size:0.85rem; color:var(--text-muted);">@r.TimeIn.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td style="font-size:0.85rem; color:var(--text-muted);">@(r.TimeOut.HasValue ? r.TimeOut.Value.ToString("yyyy-MM-dd HH:mm") : "—")</td>
+                            <td style="font-size:0.85rem;">@(duration.HasValue ? $"{(int)duration.Value.TotalMinutes} min" : "—")</td>
+                            <td>
+                                @if (r.Status == "Completed" || r.Status == "Done") {
+                                    <span style="background:#e6f7f0; color:var(--success); padding:0.15rem 0.6rem; border-radius:20px; font-size:0.72rem; font-weight:600;">@r.Status</span>
+                                } else {
+                                    <span style="background:var(--accent-lt); color:#b57f18; padding:0.15rem 0.6rem; border-radius:20px; font-size:0.72rem; font-weight:600;">@r.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,280 @@
+@model List<Batarilan_Exercise1.Models.UserAccount>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var userCount = ViewBag.UserCount as int?;
+    var activeSitIns = ViewBag.ActiveSitInCount as int?;
+    int pendingReservations = ViewBag.PendingReservations ?? 0;
+    var recentReservations = ViewBag.RecentReservations as List<Batarilan_Exercise1.Models.Reservation>
+                             ?? new List<Batarilan_Exercise1.Models.Reservation>();
+}
+
+@if (TempData["Error"] != null)   { <div class="alert alert-danger">@TempData["Error"]</div> }
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+
+@* ── Pending Reservation Notification Banner ── *@
+@if (pendingReservations > 0)
+{
+    <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd); border:1.5px solid #f0c040; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:1.6rem;">🔔</span>
+            <div>
+                <div style="font-size:0.95rem; font-weight:700; color:#7a5200;">
+                    @pendingReservations pending reservation@(pendingReservations != 1 ? "s" : "") need your attention!
+                </div>
+                @if (recentReservations.Any())
+                {
+                    <div style="font-size:0.78rem; color:#a07000; margin-top:0.2rem;">
+                        Latest: <strong>@recentReservations.First().StudentName</strong> — @recentReservations.First().Room, @recentReservations.First().PcNumber
+                        <span style="margin-left:0.5rem; opacity:0.7;">@recentReservations.First().DateCreated.ToString("MMM dd, hh:mm tt")</span>
+                    </div>
+                }
+            </div>
+        </div>
+        <a href="/Admin/Reservations?status=Pending"
+           style="background:#b57f18; color:white; padding:0.45rem 1.1rem; border-radius:7px; font-size:0.82rem; font-weight:600; text-decoration:none; white-space:nowrap; flex-shrink:0;">
+            📋 Review Reservations →
+        </a>
+    </div>
+}
+
+<div class="page-header">
+    <div>
+        <h3>Admin Dashboard</h3>
+        <p class="page-subtitle">Manage students, sit-ins &amp; system data</p>
+    </div>
+</div>
+
+<!-- Stat Cards — all clickable -->
+<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:0.85rem; margin-bottom:1.5rem;">
+
+    <a asp-controller="Admin" asp-action="Users" style="text-decoration:none;">
+        <div class="stat-card" style="cursor:pointer; border-bottom: 3px solid var(--navy-light);">
+            <div class="stat-label">Registered Students</div>
+            <div class="stat-value">@ViewBag.TotalStudents</div>
+            <div class="stat-sub" style="color:var(--navy-light); font-weight:500; margin-top:0.4rem;">View all students →</div>
+        </div>
+    </a>
+
+    <a asp-controller="Admin" asp-action="CurrentSitIn" style="text-decoration:none;">
+        <div class="stat-card" style="cursor:pointer; border-bottom: 3px solid var(--success);">
+            <div class="stat-label">Currently in Lab</div>
+            <div class="stat-value" style="color:var(--success);">@ViewBag.ActiveSitIns</div>
+            <div class="stat-sub" style="color:var(--success); font-weight:500; margin-top:0.4rem;">View sit-ins →</div>
+        </div>
+    </a>
+
+    <a asp-controller="Admin" asp-action="Records" style="text-decoration:none;">
+        <div class="stat-card" style="cursor:pointer; border-bottom: 3px solid var(--accent);">
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value">@ViewBag.TotalSitIns</div>
+            <div class="stat-sub" style="color:#b57f18; font-weight:500; margin-top:0.4rem;">View records →</div>
+        </div>
+    </a>
+
+    <div class="stat-card" style="border-bottom: 3px solid #5a6478;">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">@ViewBag.CompletedSitIns</div>
+        <div class="stat-sub">Finished sessions</div>
+    </div>
+
+    <a asp-controller="Admin" asp-action="Reservations" asp-route-status="Pending" style="text-decoration:none;">
+        <div class="stat-card" style="cursor:pointer; border-bottom: 3px solid @(pendingReservations > 0 ? "#e05c5c" : "#5a6478"); position:relative;">
+            @if (pendingReservations > 0)
+            {
+                <span style="position:absolute; top:0.6rem; right:0.75rem; background:#e05c5c; color:white; font-size:0.65rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; text-align:center; line-height:18px; padding:0 4px;">@pendingReservations</span>
+            }
+            <div class="stat-label">Reservations</div>
+            <div class="stat-value" style="color:@(pendingReservations > 0 ? "var(--danger)" : "inherit");">@pendingReservations</div>
+            <div class="stat-sub" style="color:@(pendingReservations > 0 ? "var(--danger)" : "var(--text-muted)"); font-weight:@(pendingReservations > 0 ? "600" : "400");">
+                @(pendingReservations > 0 ? "Pending review →" : "No pending")
+            </div>
+        </div>
+    </a>
+
+</div>
+
+<!-- Quick Sit-In + Chart -->
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1rem;">
+
+    <div class="card">
+        <div class="card-header">⚡ Start Sit-In</div>
+        <div class="card-body">
+            <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:0.75rem;">Enter a student's ID number to quickly start a sit-in session.</p>
+            <form asp-controller="Admin" asp-action="SitIn" method="get">
+                <div style="display:flex; gap:0.5rem; max-width:500px; flex-wrap:wrap;">
+                    <input name="idNumber" type="text" class="form-control" placeholder="Enter Student ID Number" required style="flex:1; min-width:160px;" />
+                    <select name="purpose" class="form-control" style="flex:1; min-width:160px;">
+                        <option value="C Programming">C Programming</option>
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="C#">C#</option>
+                        <option value="Web Development">Web Development</option>
+                        <option value="Database">Database</option>
+                        <option value="Research">Research</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button type="submit" class="btn btn-success" style="white-space:nowrap;">▶ Start</button>
+                </div>
+            </form>
+            <small class="text-muted" style="display:block; margin-top:0.5rem;">Tip: Use <strong>Search Students</strong> in the sidebar to find and sit-in a student by name.</small>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">📊 Sit-In by Purpose</div>
+        <div class="card-body" style="display:flex; justify-content:center; align-items:center; padding:0.75rem;">
+            @{
+                var purposeLabels = ViewBag.PurposeLabels as List<string> ?? new List<string>();
+                var purposeCounts = ViewBag.PurposeCounts as List<int> ?? new List<int>();
+            }
+            @if (!purposeLabels.Any())
+            {
+                <p class="text-muted" style="font-size:0.82rem; text-align:center; margin:0;">No sit-in data yet.</p>
+            }
+            else
+            {
+                <div style="width:180px; height:180px;">
+                    <canvas id="sitInChart"></canvas>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+<!-- Announcement Form -->
+<div class="card" style="margin-bottom:1rem;">
+    <div class="card-header bg-primary">📢 Post Announcement</div>
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="CreateAnnouncement" method="post">
+            @Html.AntiForgeryToken()
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:0.75rem; align-items:end;">
+                <div>
+                    <label class="form-label">Title</label>
+                    <input type="text" name="Title" class="form-control" required placeholder="Announcement title" />
+                </div>
+                <div>
+                    <label class="form-label">Message</label>
+                    <textarea name="Message" class="form-control" rows="2" required placeholder="Announcement message" style="resize:none;"></textarea>
+                </div>
+            </div>
+            <div style="margin-top:0.75rem;">
+                <button type="submit" class="btn btn-success btn-sm">Post Announcement</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Announcements List -->
+@{
+    var adminAnnouncements = ViewBag.Announcements as List<Batarilan_Exercise1.Models.Announcement>
+                             ?? new List<Batarilan_Exercise1.Models.Announcement>();
+}
+<div class="card">
+    <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>📋 Existing Announcements</span>
+        <small class="text-muted">@adminAnnouncements.Count total</small>
+    </div>
+    <div class="card-body" style="padding:0;">
+        @if (!adminAnnouncements.Any())
+        {
+            <p class="text-muted" style="margin:1.25rem; font-size:0.875rem;">No announcements posted yet.</p>
+        }
+        else
+        {
+            foreach (var a in adminAnnouncements)
+            {
+                <div style="padding:0.9rem 1.25rem; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:baseline; gap:0.75rem; margin-bottom:0.25rem;">
+                            <strong style="font-size:0.9rem; color:var(--text);">@a.Title</strong>
+                            <small class="text-muted" style="font-size:0.75rem; white-space:nowrap;">@a.DatePosted.ToString("MMM dd, yyyy hh:mm tt")</small>
+                        </div>
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-muted); line-height:1.5;">@a.Message</p>
+                    </div>
+                    <div style="display:flex; gap:0.4rem; flex-shrink:0;">
+                        <!-- Edit button → navigates to full edit page -->
+                        <a href="/Admin/EditAnnouncement/@a.Id" class="btn btn-outline-secondary btn-sm">✏️ Edit</a>
+                        <!-- Delete -->
+                        <form asp-controller="Admin" asp-action="DeleteAnnouncement" method="post" style="display:inline;"
+                              onsubmit="return confirm('Delete this announcement?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@a.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">🗑 Delete</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div id="editAnnouncementModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:10px; padding:1.5rem; width:100%; max-width:500px; box-shadow:0 8px 32px rgba(0,0,0,0.2); margin:1rem;">
+        <h5 style="margin:0 0 1rem; font-size:1rem; color:var(--text, #1a2035);">✏️ Edit Announcement</h5>
+        <form asp-controller="Admin" asp-action="EditAnnouncement" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editAnnouncementId" />
+            <div style="margin-bottom:0.75rem;">
+                <label class="form-label">Title</label>
+                <input type="text" name="Title" id="editAnnouncementTitle" class="form-control" required />
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label class="form-label">Message</label>
+                <textarea name="Message" id="editAnnouncementMessage" class="form-control" rows="3" required style="resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" onclick="closeEditModal()" class="btn btn-outline-secondary btn-sm">Cancel</button>
+                <button type="submit" class="btn btn-success btn-sm">💾 Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(id, title, message) {
+        document.getElementById('editAnnouncementId').value = id;
+        document.getElementById('editAnnouncementTitle').value = title;
+        document.getElementById('editAnnouncementMessage').value = message;
+        var modal = document.getElementById('editAnnouncementModal');
+        modal.style.display = 'flex';
+    }
+    function closeEditModal() {
+        document.getElementById('editAnnouncementModal').style.display = 'none';
+    }
+    // Close on backdrop click
+    document.getElementById('editAnnouncementModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditModal();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var purposeLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PurposeLabels ?? new List<string>()));
+    var purposeCounts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PurposeCounts ?? new List<int>()));
+
+    if (purposeLabels.length > 0) {
+        var palette = ['#0d2b55','#1e8a5e','#b57f18','#e05c5c','#5c7ae0','#9b5ce0','#e08a5c','#5cb8e0'];
+        var ctx = document.getElementById('sitInChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: purposeLabels,
+                datasets: [{
+                    data: purposeCounts,
+                    backgroundColor: palette.slice(0, purposeLabels.length),
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, padding: 8 } }
+                }
+            }
+        });
+    }
+</script>

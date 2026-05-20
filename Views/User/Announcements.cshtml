@@ -1,0 +1,92 @@
+@model List<Batarilan_Exercise1.Models.Announcement>
+@{
+    ViewData["Title"] = "Announcements";
+    int count  = Model?.Count ?? 0;
+    var search = ViewBag.Search as string ?? "";
+}
+
+<div class="page-header">
+    <div>
+        <h3>📢 Announcements</h3>
+        <p class="page-subtitle">
+            @count announcement@(count != 1 ? "s" : "")
+            @if (!string.IsNullOrEmpty(search)) { <span> — filtered by "<strong>@search</strong>"</span> }
+        </p>
+    </div>
+    <a asp-controller="User" asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">← Dashboard</a>
+</div>
+
+<!-- Search bar -->
+<div class="card" style="margin-bottom:1rem;">
+    <div class="card-body" style="padding:0.75rem 1rem;">
+        <form method="get" style="display:flex; gap:0.65rem; align-items:center;">
+            <input name="search" value="@search" class="form-control"
+                   placeholder="Search announcements by title or message…"
+                   style="flex:1;" />
+            <button type="submit" class="btn btn-primary">🔍 Search</button>
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <a asp-action="Announcements" class="btn btn-outline-secondary">Clear</a>
+            }
+        </form>
+    </div>
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="card">
+        <div class="card-body" style="text-align:center; padding:3rem 2rem;">
+            <div style="font-size:2.5rem; opacity:0.3; margin-bottom:0.75rem;">📢</div>
+            <p style="color:var(--text-muted); margin:0;">
+                @if (!string.IsNullOrEmpty(search))
+                { <text>No announcements match "<strong>@search</strong>".</text> }
+                else
+                { <text>No announcements at this time. Check back later.</text> }
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <div style="display:flex; flex-direction:column; gap:0.85rem;">
+        @foreach (var a in Model)
+        {
+             string title = a.Title ?? ""; 
+             string msg   = a.Message ?? ""; 
+
+            <div class="card" style="transition:box-shadow 0.2s; border-left:4px solid var(--navy);">
+                <div style="padding:1.1rem 1.25rem; display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:0.85rem; flex:1; min-width:0;">
+                        <div style="width:42px; height:42px; background:var(--navy); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">📢</div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:700; font-size:1rem; color:var(--navy); margin-bottom:0.15rem;">@title</div>
+                            <div style="font-size:0.78rem; color:var(--text-muted);">
+                                🕐 Posted @a.DatePosted.ToString("MMMM dd, yyyy")
+                                <span style="margin:0 0.4rem; opacity:0.4;">·</span>
+                                @a.DatePosted.ToString("h:mm tt")
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.35rem; flex-shrink:0;">
+                        <span style="background:#e5f0fb; color:#2270b8; font-size:0.7rem; font-weight:600; padding:0.2rem 0.65rem; border-radius:20px; white-space:nowrap;">
+                            @a.DatePosted.ToString("MMM dd")
+                        </span>
+                        @{
+                            int daysAgo = (DateTime.Now - a.DatePosted).Days;
+                            string freshness = daysAgo == 0 ? "Today" : daysAgo == 1 ? "Yesterday" : $"{daysAgo}d ago";
+                            string freshColor = daysAgo == 0 ? "var(--success)" : daysAgo <= 3 ? "#b57f18" : "var(--text-muted)";
+                        }
+                        <span style="font-size:0.68rem; color:@freshColor; font-weight:600;">@freshness</span>
+                    </div>
+                </div>
+                <div style="padding:1rem 1.25rem;">
+                    <p style="margin:0; font-size:0.9rem; color:var(--text); line-height:1.75;">@msg</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top:0.75rem; text-align:right; font-size:0.78rem; color:var(--text-muted);">
+        @count announcement@(count != 1 ? "s" : "") total
+    </div>
+}

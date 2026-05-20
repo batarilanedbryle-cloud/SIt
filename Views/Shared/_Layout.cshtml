@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CCS Sit-in System</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">CCS Sit-in Monitoring System</a>
+            <div class="ms-auto">
+                <ul class="navbar-nav flex-row gap-2">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Community</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        @if (Context.Session.GetString("UserRole") == "Admin")
+                        {
+                            <!-- Notification Bell for Admin -->
+                            <li class="nav-item" style="position:relative;">
+                                <button id="notifBell" onclick="toggleNotifDropdown()"
+                                        style="background:none; border:none; cursor:pointer; position:relative; padding:0.25rem 0.5rem; color:rgba(255,255,255,0.85); font-size:1.2rem; line-height:1;"
+                                        title="Pending Reservations">
+                                    🔔
+                                    <span id="notifBadge"
+                                          style="display:none; position:absolute; top:-2px; right:-2px; background:#e05c5c; color:white; font-size:0.6rem; font-weight:700; min-width:16px; height:16px; border-radius:50%; text-align:center; line-height:16px; padding:0 3px;"></span>
+                                </button>
+                                <!-- Dropdown panel -->
+                                <div id="notifDropdown"
+                                     style="display:none; position:absolute; right:0; top:calc(100% + 6px); width:320px; background:white; border:1.5px solid var(--border,#e2e6ea); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:9999; overflow:hidden;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.7rem 1rem; border-bottom:1px solid #f0f0f0; background:#f8f9fa;">
+                                        <strong style="font-size:0.85rem; color:#1a2035;">📅 Pending Reservations</strong>
+                                        <a href="/Admin/Reservations?status=Pending" onclick="closeNotif()" style="font-size:0.75rem; color:#1e8a5e; font-weight:600; text-decoration:none;">View all →</a>
+                                    </div>
+                                    <div id="notifList" style="max-height:280px; overflow-y:auto;">
+                                        <p style="text-align:center; padding:1.2rem; color:#aaa; font-size:0.82rem; margin:0;" id="notifEmpty">Loading…</p>
+                                    </div>
+                                    <div style="padding:0.5rem 1rem; border-top:1px solid #f0f0f0; background:#f8f9fa; text-align:center;">
+                                        <a href="/Admin/Reservations" onclick="closeNotif()" style="font-size:0.78rem; color:#5a6478; text-decoration:none;">Open Reservations Manager</a>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <span class="nav-user-badge">👤 @Context.Session.GetString("UserName")</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn-nav-logout" href="/Account/Logout">Logout</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="btn-nav-outline" href="/Account/Login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn-nav-accent" href="/Account/Register">Register</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN LAYOUT -->
+    <div class="site-body">
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <aside class="site-sidebar">
+
+                @if (Context.Session.GetString("UserRole") == "Admin")
+                {
+                    <div class="sidebar-label">Admin</div>
+                    <a href="/Admin/Dashboard" class="sidebar-link">📊 Dashboard</a>
+                    <a href="/Admin/Users" class="sidebar-link">👥 Registered Students</a>
+                    <a href="/Admin/Search" class="sidebar-link">🔍 Search Students</a>
+                    <a href="/Admin/CurrentSitIn" class="sidebar-link">🖥 Current Sit-In</a>
+                    <a href="/Admin/Records" class="sidebar-link">📁 Sit-In Records</a>
+
+                    <div class="sidebar-label" style="margin-top:0.6rem;">Management</div>
+                    <a href="/Admin/Reservations" class="sidebar-link" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>📅 Reservations</span>
+                        <span id="sidebarPendingBadge" style="display:none; background:#e05c5c; color:white; font-size:0.65rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; text-align:center; line-height:18px; padding:0 4px;"></span>
+                    </a>
+                    <a href="/Admin/PcStatus" class="sidebar-link">🖥 PC Availability</a>
+                    <a href="/Admin/Rewards" class="sidebar-link">⭐ Rewards &amp; Points</a>
+                    <a href="/Admin/Leaderboard2" class="sidebar-link">🏆 Leaderboard</a>
+                    <a href="/Admin/Feedbacks" class="sidebar-link">💬 Feedbacks</a>
+                    <a href="/Admin/Announcements" class="sidebar-link">📢 Announcements</a>
+
+                    <div class="sidebar-label" style="margin-top:0.6rem;">Reports</div>
+                    <a href="/Admin/Reports" class="sidebar-link">📊 Generate Report</a>
+                }
+
+                @if (Context.Session.GetString("UserRole") == "Student")
+                {
+                    <div class="sidebar-label">Student</div>
+                    <a href="/User/Dashboard" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/Dashboard") ? "active" : "")">🏠 Dashboard</a>
+                    <a href="/User/Profile" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/Profile") || Context.Request.Path.StartsWithSegments("/User/Edit") ? "active" : "")">👤 My Profile</a>
+
+                    @* ── Announcements accordion in sidebar ── *@
+                    <button class="sidebar-link" id="sidebarAnnounceBtn"
+                            onclick="toggleSidebarAnnouncements()"
+                            style="width:100%; text-align:left; background:none; border:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                        <span>📢 Announcements</span>
+                        <span id="announceChevron" style="font-size:0.65rem; opacity:0.7;">▼</span>
+                    </button>
+                    <div id="sidebarAnnouncementsPanel" style="display:none; border-left:3px solid rgba(255,255,255,0.2); margin:0 0 0.25rem 0.5rem; overflow:hidden;">
+                        @{
+                            var sidebarAnnouncements = (ViewBag.SidebarAnnouncements as IEnumerable<Batarilan_Exercise1.Models.Announcement>)
+                                ?? new List<Batarilan_Exercise1.Models.Announcement>();
+                        }
+                        @if (!sidebarAnnouncements.Any())
+                        {
+                            <p style="font-size:0.78rem; color:rgba(255,255,255,0.45); padding:0.6rem 0.9rem; margin:0;">No announcements yet.</p>
+                        }
+                        else
+                        {
+                            foreach (var ann in sidebarAnnouncements.Take(4))
+                            {
+                                <div style="padding:0.55rem 0.9rem; border-bottom:1px solid rgba(255,255,255,0.07);">
+                                    <div style="font-size:0.77rem; font-weight:600; color:rgba(255,255,255,0.88); margin-bottom:0.15rem; line-height:1.3;">@ann.Title</div>
+                                    <div style="font-size:0.71rem; color:rgba(255,255,255,0.5); line-height:1.35;">@(ann.Message.Length > 55 ? ann.Message.Substring(0, 55) + "…" : ann.Message)</div>
+                                    <div style="font-size:0.66rem; color:rgba(255,255,255,0.3); margin-top:0.2rem;">@ann.DatePosted.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            }
+                        }
+                        <div style="padding:0.45rem 0.9rem;">
+                            <a href="/User/Announcements" style="font-size:0.73rem; color:rgba(255,255,255,0.55); text-decoration:none;">View all →</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-label" style="margin-top:0.75rem;">Lab</div>
+                    <a href="/User/SitInHistory" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/SitInHistory") ? "active" : "")">🖥 Sit-In History</a>
+                    <a href="/User/MyReservations" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/MyReservations") ? "active" : "")">📅 My Reservations</a>
+                    <a href="/User/MyRewards" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/MyRewards") ? "active" : "")">⭐ My Rewards</a>
+                    <a href="/User/MyFeedback" class="sidebar-link @(Context.Request.Path.StartsWithSegments("/User/MyFeedback") ? "active" : "")">💬 My Feedback</a>
+
+                    <script>
+                        function toggleSidebarAnnouncements() {
+                            var panel = document.getElementById('sidebarAnnouncementsPanel');
+                            var chevron = document.getElementById('announceChevron');
+                            if (panel.style.display === 'none') {
+                                panel.style.display = 'block';
+                                chevron.textContent = '▲';
+                            } else {
+                                panel.style.display = 'none';
+                                chevron.textContent = '▼';
+                            }
+                        }
+                    </script>
+                }
+
+            </aside>
+        }
+
+        <!-- CONTENT -->
+        <main class="site-content">
+            @RenderBody()
+        </main>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>© 2024 College of Computer Studies — CCS Sit-in Monitoring System</footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+
+    @if (User.Identity.IsAuthenticated && Context.Session.GetString("UserRole") == "Admin")
+    {
+        <script>
+        // ── Admin Notification Bell ─────────────────────────────────────────
+        var notifOpen = false;
+
+        function loadNotifications() {
+            fetch('/Admin/GetPendingCount')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var badge    = document.getElementById('notifBadge');
+                    var sideBadge = document.getElementById('sidebarPendingBadge');
+                    var count    = data.count || 0;
+
+                    if (count > 0) {
+                        badge.textContent    = count > 99 ? '99+' : count;
+                        badge.style.display  = 'inline-block';
+                        if (sideBadge) {
+                            sideBadge.textContent   = count > 99 ? '99+' : count;
+                            sideBadge.style.display = 'inline-block';
+                        }
+                    } else {
+                        badge.style.display  = 'none';
+                        if (sideBadge) sideBadge.style.display = 'none';
+                    }
+                })
+                .catch(function() {});
+        }
+
+        function loadNotifList() {
+            var list = document.getElementById('notifList');
+            list.innerHTML = '<p style="text-align:center;padding:1.2rem;color:#aaa;font-size:0.82rem;margin:0;">Loading…</p>';
+
+            fetch('/Admin/Reservations?status=Pending', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function() {
+                    // Instead, fetch JSON pending list via dedicated endpoint
+                })
+                .catch(function() {});
+
+            // Fetch the pending reservations as a simple page and extract — 
+            // easier: just use the count endpoint + redirect link
+            fetch('/Admin/GetPendingCount')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var count = data.count || 0;
+                    if (count === 0) {
+                        list.innerHTML = '<p style="text-align:center;padding:1.5rem;color:#aaa;font-size:0.84rem;margin:0;">✅ No pending reservations</p>';
+                    } else {
+                        list.innerHTML =
+                            '<div style="padding:0.85rem 1rem; display:flex; align-items:center; gap:0.75rem; border-bottom:1px solid #f5f5f5;">'
+                            + '<span style="font-size:1.6rem;">⏳</span>'
+                            + '<div>'
+                            + '<div style="font-size:0.88rem; font-weight:600; color:#1a2035;">' + count + ' reservation' + (count !== 1 ? 's' : '') + ' awaiting review</div>'
+                            + '<div style="font-size:0.76rem; color:#888; margin-top:2px;">Click "View all" to approve or deny</div>'
+                            + '</div>'
+                            + '</div>'
+                            + '<div style="padding:0.6rem 1rem; text-align:center;">'
+                            + '<a href="/Admin/Reservations?status=Pending" onclick="closeNotif()" '
+                            + 'style="display:inline-block; padding:0.45rem 1.2rem; background:#0d2b55; color:white; border-radius:6px; font-size:0.8rem; font-weight:600; text-decoration:none;">📋 Review Reservations</a>'
+                            + '</div>';
+                    }
+                })
+                .catch(function() {
+                    list.innerHTML = '<p style="text-align:center;padding:1rem;color:#e05c5c;font-size:0.8rem;margin:0;">Failed to load</p>';
+                });
+        }
+
+        function toggleNotifDropdown() {
+            var dropdown = document.getElementById('notifDropdown');
+            notifOpen = !notifOpen;
+            dropdown.style.display = notifOpen ? 'block' : 'none';
+            if (notifOpen) loadNotifList();
+        }
+
+        function closeNotif() {
+            notifOpen = false;
+            var dropdown = document.getElementById('notifDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            var bell     = document.getElementById('notifBell');
+            var dropdown = document.getElementById('notifDropdown');
+            if (bell && dropdown && !bell.contains(e.target) && !dropdown.contains(e.target)) {
+                closeNotif();
+            }
+        });
+
+        // Load badge count on page load and poll every 30s
+        loadNotifications();
+        setInterval(loadNotifications, 30000);
+        </script>
+    }
+</body>
+</html>

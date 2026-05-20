@@ -1,0 +1,131 @@
+@{
+    ViewData["Title"] = "Home";
+    var leaderboard  = ViewBag.Leaderboard  as List<Batarilan_Exercise1.Models.UserAccount> ?? new List<Batarilan_Exercise1.Models.UserAccount>();
+    var rewardCounts = ViewBag.RewardCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var sitInCounts  = ViewBag.SitInCounts  as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<!-- LEADERBOARD -->
+<div class="card" id="leaderboard">
+    <div class="card-header" style="background:var(--navy);color:white;display:flex;align-items:center;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:0.5rem;font-size:1rem;font-weight:600;">🏆 Student Leaderboard</span>
+        <span style="font-size:0.75rem;font-weight:400;opacity:0.65;">Top performers by points</span>
+    </div>
+
+    @if (!leaderboard.Any())
+    {
+        <div class="card-body" style="text-align:center;padding:3rem 2rem;">
+            <div style="font-size:2.5rem;opacity:0.25;margin-bottom:0.75rem;">🏆</div>
+            <p style="color:var(--text-muted);margin:0;">No student data yet. Check back soon!</p>
+        </div>
+    }
+    else
+    {
+        <!-- Top 3 podium -->
+        @if (leaderboard.Count >= 3)
+        {
+            <div style="display:flex;align-items:flex-end;justify-content:center;gap:1rem;padding:2rem 1rem 0;flex-wrap:wrap;">
+
+                <!-- 2nd -->
+                <div style="text-align:center;flex:1;max-width:180px;">
+                    <div style="font-size:1.75rem;margin-bottom:0.3rem;">🥈</div>
+                    <div style="background:var(--white);border:2px solid #c0c0c0;border-radius:var(--radius-lg);padding:0.9rem 0.6rem;box-shadow:0 2px 8px rgba(13,43,85,0.07);">
+                        <div style="width:44px;height:44px;background:#9ca3af;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;margin:0 auto 0.5rem;">
+                            @{ string i2=""; if(!string.IsNullOrEmpty(leaderboard[1].FirstName)) i2+=leaderboard[1].FirstName[0]; if(!string.IsNullOrEmpty(leaderboard[1].LastName)) i2+=leaderboard[1].LastName[0]; }@i2
+                        </div>
+                        <div style="font-weight:700;font-size:0.85rem;color:var(--navy);">@leaderboard[1].FirstName @leaderboard[1].LastName</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">@leaderboard[1].Course</div>
+                        <div style="font-size:0.71rem;color:var(--text-muted);margin-top:0.15rem;">@(sitInCounts.ContainsKey(leaderboard[1].Id)?sitInCounts[leaderboard[1].Id]:0) sit-ins</div>
+                        <div style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#6b7280;margin-top:0.3rem;">@leaderboard[1].Points pts</div>
+                    </div>
+                    <div style="height:50px;background:#e5e7eb;border-radius:4px 4px 0 0;margin-top:0.5rem;"></div>
+                </div>
+
+                <!-- 1st -->
+                <div style="text-align:center;flex:1;max-width:200px;">
+                    <div style="font-size:2rem;margin-bottom:0.3rem;">🥇</div>
+                    <div style="background:var(--white);border:2px solid var(--accent);border-radius:var(--radius-lg);padding:1.1rem 0.6rem;box-shadow:0 4px 16px rgba(13,43,85,0.10);">
+                        <div style="width:52px;height:52px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:white;margin:0 auto 0.5rem;">
+                            @{ string i1=""; if(!string.IsNullOrEmpty(leaderboard[0].FirstName)) i1+=leaderboard[0].FirstName[0]; if(!string.IsNullOrEmpty(leaderboard[0].LastName)) i1+=leaderboard[0].LastName[0]; }@i1
+                        </div>
+                        <div style="font-weight:700;font-size:0.95rem;color:var(--navy);">@leaderboard[0].FirstName @leaderboard[0].LastName</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">@leaderboard[0].Course</div>
+                        <div style="font-size:0.71rem;color:var(--text-muted);margin-top:0.15rem;">@(sitInCounts.ContainsKey(leaderboard[0].Id)?sitInCounts[leaderboard[0].Id]:0) sit-ins</div>
+                        <div style="font-family:'DM Serif Display',serif;font-size:1.7rem;color:#b57f18;margin-top:0.3rem;">@leaderboard[0].Points pts</div>
+                    </div>
+                    <div style="height:80px;background:var(--accent-lt);border-radius:4px 4px 0 0;margin-top:0.5rem;"></div>
+                </div>
+
+                <!-- 3rd -->
+                <div style="text-align:center;flex:1;max-width:180px;">
+                    <div style="font-size:1.75rem;margin-bottom:0.3rem;">🥉</div>
+                    <div style="background:var(--white);border:2px solid #cd7f32;border-radius:var(--radius-lg);padding:0.9rem 0.6rem;box-shadow:0 2px 8px rgba(13,43,85,0.07);">
+                        <div style="width:44px;height:44px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;margin:0 auto 0.5rem;">
+                            @{ string i3=""; if(!string.IsNullOrEmpty(leaderboard[2].FirstName)) i3+=leaderboard[2].FirstName[0]; if(!string.IsNullOrEmpty(leaderboard[2].LastName)) i3+=leaderboard[2].LastName[0]; }@i3
+                        </div>
+                        <div style="font-weight:700;font-size:0.85rem;color:var(--navy);">@leaderboard[2].FirstName @leaderboard[2].LastName</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">@leaderboard[2].Course</div>
+                        <div style="font-size:0.71rem;color:var(--text-muted);margin-top:0.15rem;">@(sitInCounts.ContainsKey(leaderboard[2].Id)?sitInCounts[leaderboard[2].Id]:0) sit-ins</div>
+                        <div style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:#92400e;margin-top:0.3rem;">@leaderboard[2].Points pts</div>
+                    </div>
+                    <div style="height:35px;background:#fde68a;border-radius:4px 4px 0 0;margin-top:0.5rem;"></div>
+                </div>
+            </div>
+        }
+
+        <!-- Full rankings table -->
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
+                <thead>
+                    <tr style="background:var(--surface);">
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);width:60px;text-align:center;">Rank</th>
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);">Student</th>
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);">Course</th>
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);text-align:center;">Sit-Ins</th>
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);text-align:center;">Rewards</th>
+                        <th style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);padding:0.65rem 1rem;border-bottom:1.5px solid var(--border);text-align:center;">Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int rank = 1; }
+                    @foreach (var u in leaderboard.Take(20))
+                    {
+                        string medal = rank==1?"🥇":rank==2?"🥈":rank==3?"🥉":rank.ToString();
+                        string rowBg = rank<=3?"background:#fffbf0;":"";
+                        string init  = "";
+                        if (!string.IsNullOrEmpty(u.FirstName)) init += u.FirstName[0];
+                        if (!string.IsNullOrEmpty(u.LastName))  init += u.LastName[0];
+                        int sCount = sitInCounts.ContainsKey(u.Id)  ? sitInCounts[u.Id]  : 0;
+                        int rCount = rewardCounts.ContainsKey(u.Id) ? rewardCounts[u.Id] : 0;
+                        <tr style="@rowBg border-bottom:1px solid var(--border);">
+                            <td style="text-align:center;font-size:@(rank<=3?"1.1rem":"0.875rem");font-weight:700;padding:0.65rem 1rem;">@medal</td>
+                            <td style="padding:0.65rem 1rem;">
+                                <div style="display:flex;align-items:center;gap:0.6rem;">
+                                    <div style="width:32px;height:32px;background:var(--navy-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:white;flex-shrink:0;">@init</div>
+                                    <div>
+                                        <div style="font-weight:600;font-size:0.875rem;">@u.FirstName @u.LastName</div>
+                                        <div style="font-size:0.72rem;color:var(--text-muted);">@u.IdNumber</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding:0.65rem 1rem;"><span style="background:#eef2fb;color:var(--navy-light);font-size:0.72rem;font-weight:600;padding:0.15rem 0.55rem;border-radius:20px;">@u.Course</span></td>
+                            <td style="padding:0.65rem 1rem;text-align:center;font-weight:600;font-size:0.875rem;">@sCount</td>
+                            <td style="padding:0.65rem 1rem;text-align:center;font-weight:600;font-size:0.875rem;">@rCount</td>
+                            <td style="padding:0.65rem 1rem;text-align:center;">
+                                @if (u.Points > 0) { <span style="background:var(--accent-lt);color:#b57f18;font-weight:700;font-size:0.875rem;padding:0.2rem 0.7rem;border-radius:20px;">⭐ @u.Points</span> }
+                                else { <span style="color:var(--text-muted);">—</span> }
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (leaderboard.Count > 20)
+        {
+            <div style="text-align:center;padding:1rem;font-size:0.82rem;color:var(--text-muted);border-top:1px solid var(--border);">
+                Showing top 20 of @leaderboard.Count students
+            </div>
+        }
+    }
+</div>
